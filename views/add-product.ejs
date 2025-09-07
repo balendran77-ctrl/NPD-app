@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Add Product</title>
+</head>
+<body>
+    <h2>Add Product</h2>
+    <form method="post" action="/add-product">
+        <input type="text" name="personName" placeholder="Person Entering Data" required><br>
+        <input type="text" name="customerName" placeholder="Customer Name" required><br>
+        <input type="text" name="productName" placeholder="Product Name" required><br>
+        <h3>Specifications</h3>
+        <input type="text" name="ply" placeholder="Ply"><br>
+        <input type="text" name="burstingStrength" placeholder="Bursting Strength"><br>
+        <input type="text" name="BCT" placeholder="BCT"><br>
+        <input type="text" name="ECT" placeholder="ECT"><br>
+        <input type="text" name="FCT" placeholder="FCT"><br>
+        <input type="text" name="moisture" placeholder="Moisture"><br>
+        <input type="text" name="weight" placeholder="Weight"><br>
+        <h3>Printing</h3>
+        <input type="text" name="noOfColors" placeholder="No of Colors Printing"><br>
+        <input type="text" name="printingType" placeholder="Type of Printing"><br>
+        <input type="text" name="colorsToBePrinted" placeholder="Colors to be Printed"><br>
+        <h3>Sample Details</h3>
+        <select name="sampleType">
+            <option value="FAI">FAI</option>
+            <option value="Size and spec">Size and spec</option>
+            <option value="Only size">Only size</option>
+        </select><br>
+        <input type="text" name="noOfSamples" placeholder="No of Samples Required"><br>
+        <input type="date" name="requiredDate" placeholder="Required Date"><br>
+        <input type="text" name="deliveryAddress" placeholder="Delivery Address"><br>
+        <input type="text" name="customerContact" placeholder="Customer Contact"><br>
+        <input type="text" name="contactNo" placeholder="Contact No"><br>
+        <button type="submit">Add Product</button>
+    </form>
+    <a href="/products">View Products</a>
+</body>
+</html>

@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Update Delivery/Approval</title>
+</head>
+<body>
+    <h2>Update Delivery/Approval for <%= product.productName %></h2>
+    <form method="post" action="/update-product/<%= product._id %>">
+        <label>Delivered Date:</label>
+        <input type="date" name="deliveredDate" value="<%= product.deliveredDate %>"><br>
+        <label>Approved Date:</label>
+        <input type="date" name="approvedDate" value="<%= product.approvedDate %>"><br>
+        <label>Approval Status:</label>
+        <select name="approvalStatus">
+            <option value="Approved" <%= product.approvalStatus === 'Approved' ? 'selected' : '' %>>Approved</option>
+            <option value="Rejected" <%= product.approvalStatus === 'Rejected' ? 'selected' : '' %>>Rejected</option>
+            <option value="Resample" <%= product.approvalStatus === 'Resample' ? 'selected' : '' %>>Resample</option>
+        </select><br>
+        <label>Rejection Reason:</label>
+        <input type="text" name="rejectionReason" value="<%= product.rejectionReason %>"><br>
+        <button type="submit">Update</button>
+    </form>
+    <a href="/products">Back to Products</a>
+</body>
+</html>
