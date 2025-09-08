@@ -8,7 +8,7 @@ const path = require('path');
 const app = express();
 
 // Connect to MongoDB (replace with your connection string)
-mongoose.connect('mongodb+srv://balendran77_db_user:nGQNOnk9WiAWb2Ak@clusternpd.l1uhkka.mongodb.net/productdev?retryWrites=true&w=majority&appName=ClusterNPD', { useNewUrlParser: true, useUnifiedTopology: true });
+mongoose.connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true });
 // Middleware
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(session({ secret: 'your_secret', resave: false, saveUninitialized: true }));
@@ -134,15 +134,18 @@ app.post('/add-product', async (req, res) => {
 
 // List Products
 app.get('/products', async (req, res) => {
+	if (!req.session.user) return res.redirect('/login');
 	const products = await Product.find();
 	res.render('products', { products });
 // Update product delivery/approval
 app.get('/update-product/:id', async (req, res) => {
+	if (!req.session.user) return res.redirect('/login');
 	const product = await Product.findById(req.params.id);
 	res.render('update-product', { product });
 });
 
 app.post('/update-product/:id', async (req, res) => {
+	if (!req.session.user) return res.redirect('/login');
 	const update = {
 		deliveredDate: req.body.deliveredDate,
 		approvedDate: req.body.approvedDate,
