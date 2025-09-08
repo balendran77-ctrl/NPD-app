@@ -67,6 +67,10 @@ const productSchema = new mongoose.Schema({
 	productName: String,
 	specifications: {
 		ply: String,
+		fluteType: String,
+		length: String,
+		width: String,
+		height: String,
 		burstingStrength: String,
 		BCT: String,
 		ECT: String,
@@ -104,6 +108,10 @@ app.post('/add-product', async (req, res) => {
 		productName: req.body.productName,
 		specifications: {
 			ply: req.body.ply,
+			fluteType: req.body.fluteType,
+			length: req.body.length,
+			width: req.body.width,
+			height: req.body.height,
 			burstingStrength: req.body.burstingStrength,
 			BCT: req.body.BCT,
 			ECT: req.body.ECT,
