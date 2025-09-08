@@ -6,8 +6,22 @@
 <body>
     <h2>Products</h2>
     <ul>
-        <% products.forEach(function(product) { %>
+        <% products.forEach(function(product, idx) { %>
             <li>
+                <strong>Sl. No:</strong> <%= idx + 1 %><br>
+                <strong>Current status:</strong> 
+                <% if (!product.deliveredDate) { %>
+                    Sample request given
+                <% } else if (product.deliveredDate && !product.approvalStatus) { %>
+                    Sample submitted for Approval
+                <% } else if (product.approvalStatus === 'Approved') { %>
+                    Sample approved
+                <% } else if (product.approvalStatus === 'Rejected') { %>
+                    Sample rejected
+                <% } else if (product.approvalStatus === 'Resample') { %>
+                    Submit fresh sample
+                <% } %>
+                <br>
                 <strong>Product Name:</strong> <%= product.productName %><br>
                 <strong>Customer Name:</strong> <%= product.customerName %><br>
                 <strong>Person Entering Data:</strong> <%= product.personName %><br>

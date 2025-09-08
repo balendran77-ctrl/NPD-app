@@ -98,7 +98,9 @@ const Product = mongoose.model('Product', productSchema);
 // Add Product
 app.get('/add-product', (req, res) => {
 	if (!req.session.user) return res.redirect('/login');
-	res.render('add-product');
+	Product.countDocuments().then(count => {
+		res.render('add-product', { nextSlNo: count + 1 });
+	});
 });
 app.post('/add-product', async (req, res) => {
 	if (!req.session.user) return res.redirect('/login');
