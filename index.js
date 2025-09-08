@@ -8,7 +8,7 @@ const path = require('path');
 const app = express();
 
 // Connect to MongoDB (replace with your connection string)
-mongoose.connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+mongoose.connect('mongodb+srv://balendran77_db_user:nGQNOnk9WiAWb2Ak@clusternpd.l1uhkka.mongodb.net/productdev?retryWrites=true&w=majority&appName=ClusterNPD', { useNewUrlParser: true, useUnifiedTopology: true });
 // Middleware
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(session({ secret: 'your_secret', resave: false, saveUninitialized: true }));
