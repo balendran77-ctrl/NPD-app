@@ -2,8 +2,75 @@
 <html>
 <head>
     <title>Products</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f9f9f9; }
+        h2 { text-align: center; margin-top: 20px; }
+        ul { list-style: none; padding: 0; }
+        li { background: #fff; margin: 10px 5vw; padding: 15px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.07); font-size: 1rem; }
+        a { display: inline-block; margin: 10px; color: #007bff; text-decoration: none; font-size: 1.1rem; }
+        @media (max-width: 600px) {
+            li { margin: 10px 2vw; font-size: 0.95rem; padding: 10px; }
+            h2 { font-size: 1.3rem; }
+            a { font-size: 1rem; }
+        }
+    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #f9f9f9;
+        }
+        h2 {
+            text-align: center;
+            margin-top: 20px;
+        }
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+        li {
+            background: #fff;
+            margin: 10px 5vw;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.07);
+            font-size: 1rem;
+        }
+        a {
+            display: inline-block;
+            margin: 10px;
+            color: #007bff;
+            text-decoration: none;
+            font-size: 1.1rem;
+        }
+        @media (max-width: 600px) {
+            li {
+                margin: 10px 2vw;
+                font-size: 0.95rem;
+                padding: 10px;
+            }
+            h2 {
+                font-size: 1.3rem;
+            }
+            a {
+                font-size: 1rem;
+            }
+        }
+    </style>
 </head>
 <body>
+    <% function formatDate(dateStr) {
+        if (!dateStr) return '';
+        var d = new Date(dateStr);
+        if (isNaN(d)) return dateStr;
+        var mm = String(d.getMonth() + 1).padStart(2, '0');
+        var dd = String(d.getDate()).padStart(2, '0');
+        var yyyy = d.getFullYear();
+        return mm + '-' + dd + '-' + yyyy;
+    } %>
     <h2>Products</h2>
     <ul>
         <% products.forEach(function(product, idx) { %>
@@ -38,18 +105,20 @@
                 Moisture: <%= product.specifications.moisture %>,
                 Weight: <%= product.specifications.weight %><br>
                 <strong>Printing:</strong>
-                No of Colors: <%= product.printing.noOfColors %>,
-                Type: <%= product.printing.type %>,
-                Colors: <%= product.printing.colors %><br>
+                No of Colors: <%= (product.printing && product.printing.noOfColors) ? product.printing.noOfColors : '' %>,
+                Type: <%= (product.printing && product.printing.type) ? product.printing.type : '' %>,
+                Colors: <%= (product.printing && product.printing.colors) ? product.printing.colors : '' %><br>
                 <strong>Sample Type:</strong> <%= product.sampleType %><br>
                 <strong>No of Samples:</strong> <%= product.noOfSamples %><br>
-                <strong>Required Date:</strong> <%= product.requiredDate %><br>
+                <strong>Required Date:</strong> <%= formatDate(product.requiredDate) %><br>
                 <strong>Delivery Address:</strong> <%= product.deliveryAddress %><br>
                 <strong>Customer Contact:</strong> <%= product.customerContact %><br>
                 <strong>Contact No:</strong> <%= product.contactNo %><br>
                 <strong>Created By:</strong> <%= product.createdBy %><br>
-                <strong>Delivered Date:</strong> <%= product.deliveredDate %><br>
-                <strong>Approved Date:</strong> <%= product.approvedDate %><br>
+                <strong>Delivered Date:</strong> <%= formatDate(product.deliveredDate) %><br>
+                <strong>Approved Date:</strong> <%= formatDate(product.approvedDate) %><br>
+                <strong>DC Details:</strong> <%= product.dcDetails || '' %><br>
+                <strong>Courier Details:</strong> <%= product.courierDetails || '' %><br>
                 <strong>Approval Status:</strong> <%= product.approvalStatus %><br>
                 <strong>Rejection Reason:</strong> <%= product.rejectionReason %><br>
                 <a href="/update-product/<%= product._id %>">Update Delivery/Approval</a>
@@ -57,6 +126,7 @@
         <% }); %>
     </ul>
     <a href="/add-product">Add Product</a> |
+    <a href="/edit-specifications">Edit Specifications</a> |
     <a href="/">Home</a>
 </body>
 </html>

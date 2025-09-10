@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Edit Product Specifications</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body { font-family: Arial, sans-serif; background: #f9f9f9; margin: 0; padding: 0; }
+        .container { max-width: 500px; margin: 30px auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.07); }
+        h2 { text-align: center; }
+        label { display: block; margin-top: 10px; }
+        input, select { width: 100%; padding: 8px; margin-top: 5px; border-radius: 4px; border: 1px solid #ccc; }
+        button { margin-top: 20px; width: 100%; padding: 10px; background: #007bff; color: #fff; border: none; border-radius: 4px; font-size: 1rem; }
+        @media (max-width: 600px) { .container { margin: 10px; padding: 10px; } }
+    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body { font-family: Arial, sans-serif; background: #f9f9f9; margin: 0; padding: 0; }
+        .container { max-width: 500px; margin: 30px auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.07); }
+        h2 { text-align: center; }
+        label { display: block; margin-top: 10px; }
+        input, select { width: 100%; padding: 8px; margin-top: 5px; border-radius: 4px; border: 1px solid #ccc; }
+        button { margin-top: 20px; width: 100%; padding: 10px; background: #007bff; color: #fff; border: none; border-radius: 4px; font-size: 1rem; }
+        @media (max-width: 600px) { .container { margin: 10px; padding: 10px; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Edit Product Specifications</h2>
+        <form action="/edit-specifications/<%= product._id %>" method="POST">
+            <label for="productName">Product Name</label>
+            <input type="text" id="productName" name="productName" value="<%= product.productName %>" readonly>
+
+            <label for="ply">Ply</label>
+            <input type="text" id="ply" name="ply" value="<%= product.specifications.ply %>">
+
+            <label for="fluteType">Flute Type</label>
+            <input type="text" id="fluteType" name="fluteType" value="<%= product.specifications.fluteType %>">
+
+            <label for="length">Length</label>
+            <input type="text" id="length" name="length" value="<%= product.specifications.length %>">
+
+            <label for="width">Width</label>
+            <input type="text" id="width" name="width" value="<%= product.specifications.width %>">
+
+            <label for="height">Height</label>
+            <input type="text" id="height" name="height" value="<%= product.specifications.height %>">
+
+            <label for="burstingStrength">Bursting Strength</label>
+            <input type="text" id="burstingStrength" name="burstingStrength" value="<%= product.specifications.burstingStrength %>">
+
+            <label for="BCT">BCT</label>
+            <input type="text" id="BCT" name="BCT" value="<%= product.specifications.BCT %>">
+
+            <label for="ECT">ECT</label>
+            <input type="text" id="ECT" name="ECT" value="<%= product.specifications.ECT %>">
+
+            <label for="FCT">FCT</label>
+            <input type="text" id="FCT" name="FCT" value="<%= product.specifications.FCT %>">
+
+            <label for="moisture">Moisture</label>
+            <input type="text" id="moisture" name="moisture" value="<%= product.specifications.moisture %>">
+
+            <label for="weight">Weight</label>
+            <input type="text" id="weight" name="weight" value="<%= product.specifications.weight %>">
+
+            <button type="submit">Save Changes</button>
+        </form>
+        <a href="/products">Back to Products</a>
+    </div>
+</body>
+</html>

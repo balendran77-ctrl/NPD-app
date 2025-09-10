@@ -79,8 +79,10 @@ const productSchema = new mongoose.Schema({
 		weight: String
 	},
 	printing: {
-		type: mongoose.Schema.Types.Mixed
-    },
+		noOfColors: String,
+		type: String,
+		colors: String
+	},
 	sampleType: String, // FAI, Size and spec, only size
 	noOfSamples: String,
 	requiredDate: String,
@@ -89,6 +91,8 @@ const productSchema = new mongoose.Schema({
 	contactNo: String,
 	createdBy: String,
 	deliveredDate: String,
+	dcDetails: String,
+	courierDetails: String,
 	approvedDate: String,
 	approvalStatus: String, // Approved, Rejected, Resample
 	rejectionReason: String
@@ -147,6 +151,40 @@ app.get('/products', async (req, res) => {
 	if (!req.session.user) return res.redirect('/login');
 	const products = await Product.find();
 	res.render('products', { products });
+// Route to show searchable product list for editing specifications
+app.get('/edit-specifications', async (req, res) => {
+	if (!req.session.user) return res.redirect('/login');
+	const products = await Product.find({});
+	res.render('select-product', { products });
+});
+
+// Route to show edit form for a selected product
+app.get('/edit-specifications/:id', async (req, res) => {
+	if (!req.session.user) return res.redirect('/login');
+	const product = await Product.findById(req.params.id);
+	if (!product) return res.status(404).send('Product not found');
+	res.render('edit-specifications', { product });
+});
+
+// Route to handle specification update
+app.post('/edit-specifications/:id', async (req, res) => {
+	if (!req.session.user) return res.redirect('/login');
+	const update = {
+		'specifications.ply': req.body.ply,
+		'specifications.fluteType': req.body.fluteType,
+		'specifications.length': req.body.length,
+		'specifications.width': req.body.width,
+		'specifications.height': req.body.height,
+		'specifications.burstingStrength': req.body.burstingStrength,
+		'specifications.BCT': req.body.BCT,
+		'specifications.ECT': req.body.ECT,
+		'specifications.FCT': req.body.FCT,
+		'specifications.moisture': req.body.moisture,
+		'specifications.weight': req.body.weight
+	};
+	await Product.findByIdAndUpdate(req.params.id, update);
+	res.redirect('/products');
+});
 // Update product delivery/approval
 app.get('/update-product/:id', async (req, res) => {
 	if (!req.session.user) return res.redirect('/login');
@@ -158,6 +196,8 @@ app.post('/update-product/:id', async (req, res) => {
 	if (!req.session.user) return res.redirect('/login');
 	const update = {
 		deliveredDate: req.body.deliveredDate,
+		dcDetails: req.body.dcDetails,
+		courierDetails: req.body.courierDetails,
 		approvedDate: req.body.approvedDate,
 		approvalStatus: req.body.approvalStatus,
 		rejectionReason: req.body.rejectionReason

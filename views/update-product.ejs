@@ -2,12 +2,29 @@
 <html>
 <head>
     <title>Update Delivery/Approval</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body { font-family: Arial, sans-serif; background: #f9f9f9; margin: 0; padding: 0; }
+        form { max-width: 500px; margin: 30px auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.07); }
+        label, input, select, button { display: block; width: 100%; margin-top: 10px; }
+        input, select { padding: 8px; border-radius: 4px; border: 1px solid #ccc; }
+        button { background: #007bff; color: #fff; border: none; border-radius: 4px; padding: 10px; font-size: 1rem; margin-top: 20px; }
+        a { display: inline-block; margin: 10px 0; color: #007bff; text-decoration: none; font-size: 1.1rem; }
+        @media (max-width: 600px) {
+            form { padding: 10px; margin: 0 5px; }
+            button, a { font-size: 1rem; }
+        }
+    </style>
 </head>
 <body>
     <h2>Update Delivery/Approval for <%= product.productName %></h2>
     <form method="post" action="/update-product/<%= product._id %>">
         <label>Delivered Date:</label>
         <input type="date" name="deliveredDate" value="<%= product.deliveredDate %>"><br>
+        <label for="dcDetails">DC Details:</label>
+        <input type="text" id="dcDetails" name="dcDetails" value="<%= product.dcDetails || '' %>"><br>
+        <label for="courierDetails">Courier Details:</label>
+        <input type="text" id="courierDetails" name="courierDetails" value="<%= product.courierDetails || '' %>"><br>
         <label>Approved Date:</label>
         <input type="date" name="approvedDate" value="<%= product.approvedDate %>"><br>
         <label>Approval Status:</label>
@@ -20,6 +37,7 @@
         <input type="text" name="rejectionReason" value="<%= product.rejectionReason %>"><br>
         <button type="submit">Update</button>
     </form>
-    <a href="/products">Back to Products</a>
+    <a href="/products">Back to Products</a> |
+    <a href="/edit-specifications">Edit Specifications</a>
 </body>
 </html>
