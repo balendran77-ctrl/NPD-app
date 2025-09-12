@@ -24,9 +24,10 @@
     </style>
 </head>
 <body>
+    <a href="/" style="position: absolute; top: 18px; right: 24px; color: #007bff; text-decoration: none; font-weight: bold; font-size: 1.1rem;">Home</a>
     <div class="container">
         <h2>Edit Product Specifications</h2>
-        <form action="/edit-specifications/<%= product._id %>" method="POST">
+    <form action="/edit-specifications/<%= product._id %>" method="POST" enctype="multipart/form-data">
             <label for="productName">Product Name</label>
             <input type="text" id="productName" name="productName" value="<%= product.productName %>" readonly>
 
@@ -44,6 +45,9 @@
 
             <label for="height">Height</label>
             <input type="text" id="height" name="height" value="<%= product.specifications.height %>">
+
+                <label for="thickness">Thickness</label>
+                <input type="text" id="thickness" name="thickness" value="<%= product.specifications.thickness || '' %>">
 
             <label for="burstingStrength">Bursting Strength</label>
             <input type="text" id="burstingStrength" name="burstingStrength" value="<%= product.specifications.burstingStrength %>">
@@ -63,6 +67,16 @@
             <label for="weight">Weight</label>
             <input type="text" id="weight" name="weight" value="<%= product.specifications.weight %>">
 
+            <label for="drawing">Drawing/Photo</label>
+            <input type="file" id="drawing" name="drawing">
+            <% if (product.drawingPath) { %>
+                <div style="margin-top:10px;">
+                    <strong>Current Drawing/Photo:</strong><br>
+                    <img src="<%= product.drawingPath %>" alt="Drawing/Photo" style="max-width:100%;max-height:200px;">
+                    <br>
+                    <a href="<%= product.drawingPath %>" download="<%= product.drawingOriginalName || '' %>" style="color:#007bff;font-weight:bold;">Download Drawing/Photo</a>
+                </div>
+            <% } %>
             <button type="submit">Save Changes</button>
         </form>
         <a href="/products">Back to Products</a>

@@ -71,6 +71,7 @@
         var yyyy = d.getFullYear();
         return mm + '-' + dd + '-' + yyyy;
     } %>
+    <a href="/" style="position: absolute; top: 18px; right: 24px; color: #007bff; text-decoration: none; font-weight: bold; font-size: 1.1rem;">Home</a>
     <h2>Products</h2>
     <ul>
         <% products.forEach(function(product, idx) { %>
@@ -98,6 +99,7 @@
                 Length: <%= product.specifications.length %>,
                 Width: <%= product.specifications.width %>,
                 Height: <%= product.specifications.height %>,
+                    Thickness: <%= product.specifications.thickness || '' %>,
                 Bursting Strength: <%= product.specifications.burstingStrength %>,
                 BCT: <%= product.specifications.BCT %>,
                 ECT: <%= product.specifications.ECT %>,
@@ -121,6 +123,14 @@
                 <strong>Courier Details:</strong> <%= product.courierDetails || '' %><br>
                 <strong>Approval Status:</strong> <%= product.approvalStatus %><br>
                 <strong>Rejection Reason:</strong> <%= product.rejectionReason %><br>
+                <% if (product.drawingPath) { %>
+                    <div style="margin-top:10px;">
+                        <strong>Drawing/Photo:</strong><br>
+                        <img src="<%= product.drawingPath %>" alt="Drawing/Photo" style="max-width:100%;max-height:200px;">
+                        <br>
+                        <a href="<%= product.drawingPath %>" download="<%= product.drawingOriginalName || '' %>" style="color:#007bff;font-weight:bold;">Download Drawing/Photo</a>
+                    </div>
+                <% } %>
                 <a href="/update-product/<%= product._id %>">Update Delivery/Approval</a>
             </li>
         <% }); %>

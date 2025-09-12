@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Product Status Report</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+    body { font-family: Arial, sans-serif; background: #f9f9f9; margin: 0; padding: 0; }
+    .container { max-width: 700px; margin: 30px auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.07); }
+    h2 { text-align: center; }
+    form { margin-bottom: 20px; }
+    label { display: block; margin-top: 10px; }
+    input, select { width: 100%; padding: 8px; margin-top: 5px; border-radius: 4px; border: 1px solid #ccc; }
+    button { margin-top: 20px; width: 100%; padding: 10px; background: #007bff; color: #fff; border: none; border-radius: 4px; font-size: 1rem; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+        th { background: #f0f0f0; }
+        @media (max-width: 600px) { .container { margin: 10px; padding: 10px; } table, th, td { font-size: 0.95rem; } }
+    </style>
+</head>
+<body>
+    <a href="/" style="position: absolute; top: 18px; right: 24px; color: #007bff; text-decoration: none; font-weight: bold; font-size: 1.1rem;">Home</a>
+    <div class="container">
+        <h2>Product Status Report</h2>
+        <form method="get" action="/report">
+            <label for="fromDate">From Date</label>
+            <input type="date" id="fromDate" name="fromDate" value="<%= fromDate %>">
+            <label for="toDate">To Date</label>
+            <input type="date" id="toDate" name="toDate" value="<%= toDate %>">
+            <label for="status">Current Status</label>
+            <select id="status" name="status">
+                <option value="">All</option>
+                <option value="Sample request given" <%= status==="Sample request given"?"selected":"" %>>Sample request given</option>
+                <option value="Sample submitted for Approval" <%= status==="Sample submitted for Approval"?"selected":"" %>>Sample submitted for Approval</option>
+                <option value="Sample approved" <%= status==="Sample approved"?"selected":"" %>>Sample approved</option>
+                <option value="Sample rejected" <%= status==="Sample rejected"?"selected":"" %>>Sample rejected</option>
+                <option value="Submit fresh sample" <%= status==="Submit fresh sample"?"selected":"" %>>Submit fresh sample</option>
+            </select>
+            <button type="submit">Run Report</button>
+        </form>
+        <table>
+            <tr>
+                <th>Sl. No</th>
+                <th>Product Name</th>
+                <th>Customer Name</th>
+                <th>Person Entering Data</th>
+                <th>Current Status</th>
+                <th>Required Date</th>
+            </tr>
+            <% products.forEach(function(product, idx) { %>
+                <tr>
+                    <td><%= idx + 1 %></td>
+                    <td><%= product.productName %></td>
+                    <td><%= product.customerName %></td>
+                    <td><%= product.personName %></td>
+                    <td>
+                        <% if (!product.deliveredDate) { %>
+                            Sample request given
+                        <% } else if (product.deliveredDate && !product.approvalStatus) { %>
+                            Sample submitted for Approval
+                        <% } else if (product.approvalStatus === 'Approved') { %>
+                            Sample approved
+                        <% } else if (product.approvalStatus === 'Rejected') { %>
+                            Sample rejected
+                        <% } else if (product.approvalStatus === 'Resample') { %>
+                            Submit fresh sample
+                        <% } %>
+                    </td>
+                    <td><%= product.requiredDate %></td>
+                </tr>
+            <% }); %>
+        </table>
+        <a href="/">Back to Home</a>

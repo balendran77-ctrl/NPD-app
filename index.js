@@ -7,6 +7,23 @@ const path = require('path');
 
 const app = express();
 
+// Multer setup for file uploads with original filename
+const multer = require('multer');
+const storage = multer.diskStorage({
+	destination: function (req, file, cb) {
+		cb(null, path.join(__dirname, 'uploads'));
+	},
+	filename: function (req, file, cb) {
+		// Use Date.now() to avoid collisions, preserve original extension
+		const ext = path.extname(file.originalname);
+		cb(null, file.fieldname + '-' + Date.now() + ext);
+	}
+});
+const upload = multer({ storage });
+
+// Serve uploaded files statically
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 // Connect to MongoDB (replace with your connection string)
 mongoose.connect('mongodb+srv://balendran77_db_user:nGQNOnk9WiAWb2Ak@clusternpd.l1uhkka.mongodb.net/productdev?retryWrites=true&w=majority&appName=ClusterNPD', { useNewUrlParser: true, useUnifiedTopology: true });
 // Middleware
@@ -60,6 +77,37 @@ app.get('/logout', (req, res) => {
 	res.redirect('/');
 });
 
+// Report page
+app.get('/report', async (req, res) => {
+	if (!req.session.user) return res.redirect('/login');
+	const { fromDate = '', toDate = '', status = '' } = req.query;
+	let filter = {};
+
+	// Filter by status
+	if (status) {
+		if (status === 'Sample request given') {
+			filter.deliveredDate = { $in: [null, ''] };
+		} else if (status === 'Sample submitted for Approval') {
+			filter.deliveredDate = { $ne: null };
+			filter.approvalStatus = { $in: [null, '', undefined] };
+		} else if (status === 'Sample approved') {
+			filter.approvalStatus = 'Approved';
+		} else if (status === 'Sample rejected') {
+			filter.approvalStatus = 'Rejected';
+		} else if (status === 'Submit fresh sample') {
+			filter.approvalStatus = 'Resample';
+		}
+	}
+
+	// Filter by date range
+	if (fromDate && toDate) {
+		filter.requiredDate = { $gte: fromDate, $lte: toDate };
+	}
+
+	const products = await Product.find(filter).lean();
+	res.render('report', { products, fromDate, toDate, status });
+});
+
 // Product Schema
 const productSchema = new mongoose.Schema({
 	personName: String,
@@ -95,7 +143,8 @@ const productSchema = new mongoose.Schema({
 	courierDetails: String,
 	approvedDate: String,
 	approvalStatus: String, // Approved, Rejected, Resample
-	rejectionReason: String
+	rejectionReason: String,
+	drawingPath: String // File path for drawing/photo
 });
 const Product = mongoose.model('Product', productSchema);
 
@@ -167,7 +216,7 @@ app.get('/edit-specifications/:id', async (req, res) => {
 });
 
 // Route to handle specification update
-app.post('/edit-specifications/:id', async (req, res) => {
+app.post('/edit-specifications/:id', upload.single('drawing'), async (req, res) => {
 	if (!req.session.user) return res.redirect('/login');
 	const update = {
 		'specifications.ply': req.body.ply,
@@ -182,6 +231,9 @@ app.post('/edit-specifications/:id', async (req, res) => {
 		'specifications.moisture': req.body.moisture,
 		'specifications.weight': req.body.weight
 	};
+	if (req.file) {
+		update.drawingPath = '/uploads/' + req.file.filename;
+	}
 	await Product.findByIdAndUpdate(req.params.id, update);
 	res.redirect('/products');
 });
