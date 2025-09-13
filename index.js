@@ -1,3 +1,4 @@
+// ...existing code...
 const express = require('express');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
@@ -260,6 +261,83 @@ app.post('/update-product/:id', async (req, res) => {
 });
 
 // Start server
+
+// XLSX download route for report
+const XLSX = require('xlsx');
+app.get('/download-report', async (req, res) => {
+	if (!req.session.user) return res.redirect('/login');
+	const { fromDate = '', toDate = '', status = '' } = req.query;
+	let filter = {};
+
+	// Filter by status
+	if (status) {
+		if (status === 'Sample request given') {
+			filter.deliveredDate = { $in: [null, ''] };
+		} else if (status === 'Sample submitted for Approval') {
+			filter.deliveredDate = { $ne: null };
+			filter.approvalStatus = { $in: [null, '', undefined] };
+		} else if (status === 'Sample approved') {
+			filter.approvalStatus = 'Approved';
+		} else if (status === 'Sample rejected') {
+			filter.approvalStatus = 'Rejected';
+		} else if (status === 'Submit fresh sample') {
+			filter.approvalStatus = 'Resample';
+		}
+	}
+
+	// Filter by date range
+	if (fromDate && toDate) {
+		filter.requiredDate = { $gte: fromDate, $lte: toDate };
+	}
+
+	const products = await Product.find(filter).lean();
+
+	// Prepare data for XLSX
+	const data = products.map((p, idx) => ({
+		'Sl. No': idx + 1,
+		'Person Name': p.personName,
+		'Customer Name': p.customerName,
+		'Product Name': p.productName,
+		'Ply': p.specifications?.ply,
+		'Flute Type': p.specifications?.fluteType,
+		'Length': p.specifications?.length,
+		'Width': p.specifications?.width,
+		'Height': p.specifications?.height,
+		'Bursting Strength': p.specifications?.burstingStrength,
+		'BCT': p.specifications?.BCT,
+		'ECT': p.specifications?.ECT,
+		'FCT': p.specifications?.FCT,
+		'Moisture': p.specifications?.moisture,
+		'Weight': p.specifications?.weight,
+		'No. of Colors': p.printing?.noOfColors,
+		'Printing Type': p.printing?.type,
+		'Colors to be Printed': p.printing?.colors,
+		'Sample Type': p.sampleType,
+		'No. of Samples': p.noOfSamples,
+		'Required Date': p.requiredDate,
+		'Delivery Address': p.deliveryAddress,
+		'Customer Contact': p.customerContact,
+		'Contact No': p.contactNo,
+		'Created By': p.createdBy,
+		'Delivered Date': p.deliveredDate,
+		'DC Details': p.dcDetails,
+		'Courier Details': p.courierDetails,
+		'Approved Date': p.approvedDate,
+		'Approval Status': p.approvalStatus,
+		'Rejection Reason': p.rejectionReason,
+		'Drawing Path': p.drawingPath
+	}));
+
+	const ws = XLSX.utils.json_to_sheet(data);
+	const wb = XLSX.utils.book_new();
+	XLSX.utils.book_append_sheet(wb, ws, 'Report');
+	const buf = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+
+	res.setHeader('Content-Disposition', 'attachment; filename="report.xlsx"');
+	res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+	res.send(buf);
+});
+
 app.listen(3000, () => {
 	console.log('Server running on http://localhost:3000');
 });

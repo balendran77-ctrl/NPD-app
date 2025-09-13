@@ -21,7 +21,7 @@
     <a href="/" style="position: absolute; top: 18px; right: 24px; color: #007bff; text-decoration: none; font-weight: bold; font-size: 1.1rem;">Home</a>
     <div class="container">
         <h2>Product Status Report</h2>
-        <form method="get" action="/report">
+    <form method="get" action="/report" id="reportForm">
             <label for="fromDate">From Date</label>
             <input type="date" id="fromDate" name="fromDate" value="<%= fromDate %>">
             <label for="toDate">To Date</label>
@@ -36,7 +36,15 @@
                 <option value="Submit fresh sample" <%= status==="Submit fresh sample"?"selected":"" %>>Submit fresh sample</option>
             </select>
             <button type="submit">Run Report</button>
+            <button type="button" onclick="downloadXLSX()" style="margin-top:10px;background:#28a745;">Download XLSX</button>
         </form>
+        <script>
+        function downloadXLSX() {
+            var form = document.getElementById('reportForm');
+            var params = new URLSearchParams(new FormData(form)).toString();
+            window.location.href = '/download-report?' + params;
+        }
+        </script>
         <table>
             <tr>
                 <th>Sl. No</th>
