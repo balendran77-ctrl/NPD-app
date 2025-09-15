@@ -146,7 +146,12 @@ const productSchema = new mongoose.Schema({
 	approvedDate: String,
 	approvalStatus: String, // Approved, Rejected, Resample
 	rejectionReason: String,
-	drawingPath: String // File path for drawing/photo
+	drawingPath: String, // File path for drawing/photo
+	statusUpdates: [{
+		date: String,
+		status: String,
+		details: String
+	}]
 });
 const Product = mongoose.model('Product', productSchema);
 
@@ -258,7 +263,21 @@ app.post('/update-product/:id', async (req, res) => {
 		approvalStatus: req.body.approvalStatus,
 		rejectionReason: req.body.rejectionReason
 	};
-	await Product.findByIdAndUpdate(req.params.id, update);
+	// If status update fields are present, push to statusUpdates array
+	if (req.body.statusDate && req.body.status && req.body.statusDetails) {
+		await Product.findByIdAndUpdate(req.params.id, {
+			$set: update,
+			$push: {
+				statusUpdates: {
+					date: req.body.statusDate,
+					status: req.body.status,
+					details: req.body.statusDetails
+				}
+			}
+		});
+	} else {
+		await Product.findByIdAndUpdate(req.params.id, update);
+	}
 	res.redirect('/products');
 });
 });
@@ -329,7 +348,8 @@ app.get('/download-report', async (req, res) => {
 		'Approved Date': p.approvedDate,
 		'Approval Status': p.approvalStatus,
 		'Rejection Reason': p.rejectionReason,
-		'Drawing Path': p.drawingPath
+	'Drawing Path': p.drawingPath,
+	'Status Updates': Array.isArray(p.statusUpdates) ? p.statusUpdates.map(su => `${su.date}: ${su.status} - ${su.details}`).join('; ') : ''
 	}));
 
 	const ws = XLSX.utils.json_to_sheet(data);

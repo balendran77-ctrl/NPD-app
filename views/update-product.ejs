@@ -36,6 +36,15 @@
         </select><br>
         <label>Rejection Reason:</label>
         <input type="text" name="rejectionReason" value="<%= product.rejectionReason %>"><br>
+
+        <hr>
+        <h3>Status Update</h3>
+        <label for="statusDate">Status as on Date:</label>
+        <input type="date" id="statusDate" name="statusDate"><br>
+        <label for="status">Status:</label>
+        <input type="text" id="status" name="status"><br>
+        <label for="statusDetails">Status change details:</label>
+        <textarea id="statusDetails" name="statusDetails" rows="2"></textarea><br>
         <button type="submit">Update</button>
     </form>
     <a href="/products">Back to Products</a> |
