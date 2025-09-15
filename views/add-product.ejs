@@ -31,6 +31,15 @@
             <input type="text" name="length" placeholder="Length" style="width: 80px;">
             <input type="text" name="width" placeholder="Width" style="width: 80px;">
             <input type="text" name="height" placeholder="Height" style="width: 80px;">
+            <select name="unitOfMeasurement" style="width: 80px;">
+                <option value="MM">MM</option>
+                <option value="CM">CM</option>
+                <option value="INCH">INCH</option>
+            </select>
+            <script>
+                document.querySelector('select[name="unitOfMeasurement"]').setAttribute('required', 'required');
+            </script>
+            </select>
         </div><br>
         <input type="text" name="ply" placeholder="Ply"><br>
         <input type="text" name="fluteType" placeholder="Flute type"><br>

@@ -45,6 +45,13 @@
 
             <label for="height">Height</label>
             <input type="text" id="height" name="height" value="<%= product.specifications.height %>">
+            <label for="unitOfMeasurement">Unit of Measurement</label>
+            <label for="unitOfMeasurement">UOM</label>
+            <select id="unitOfMeasurement" name="unitOfMeasurement">
+                <option value="MM" <%= product.specifications.unitOfMeasurement === 'MM' ? 'selected' : '' %>>MM</option>
+                <option value="CM" <%= product.specifications.unitOfMeasurement === 'CM' ? 'selected' : '' %>>CM</option>
+                <option value="INCH" <%= product.specifications.unitOfMeasurement === 'INCH' ? 'selected' : '' %>>INCH</option>
+            </select>
 
                 <label for="thickness">Thickness</label>
                 <input type="text" id="thickness" name="thickness" value="<%= product.specifications.thickness || '' %>">
