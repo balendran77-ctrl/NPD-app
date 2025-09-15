@@ -128,11 +128,11 @@ const productSchema = new mongoose.Schema({
 		moisture: String,
 		weight: String
 	},
-	printing: {
+	printing: new mongoose.Schema({
 		noOfColors: String,
 		type: String,
 		colors: String
-	},
+	}, { _id: false }),
 	sampleType: String, // FAI, Size and spec, only size
 	noOfSamples: String,
 	requiredDate: String,
