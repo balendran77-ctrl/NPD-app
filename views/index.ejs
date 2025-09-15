@@ -20,6 +20,9 @@
         <a href="/products">View Products</a> |
         <a href="/edit-specifications">Edit Specifications</a> |
         <a href="/report">Report</a> |
+        <% if (user.isAdmin) { %>
+            <a href="/admin/users">Admin Management</a> |
+        <% } %>
         <a href="/logout">Logout</a>
     <% } else { %>
         <a href="/login">Login</a> |

@@ -1,4 +1,8 @@
 // ...existing code...
+// ...existing code...
+// ...existing code...
+// Place admin user management routes after app initialization
+// ...existing code...
 const express = require('express');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
@@ -36,7 +40,8 @@ app.set('views', path.join(__dirname, 'views'));
 // User Schema
 const userSchema = new mongoose.Schema({
 	username: String,
-	password: String
+	password: String,
+	isAdmin: { type: Boolean, default: false }
 });
 const User = mongoose.model('User', userSchema);
 
@@ -46,10 +51,17 @@ app.get('/', (req, res) => {
 });
 
 // Register
+// Only allow admin to access registration
+function isAdmin(req) {
+	return req.session.user && req.session.user.isAdmin;
+}
+
 app.get('/register', (req, res) => {
+	if (!isAdmin(req)) return res.status(403).send('Forbidden: Admins only');
 	res.render('register');
 });
 app.post('/register', async (req, res) => {
+	if (!isAdmin(req)) return res.status(403).send('Forbidden: Admins only');
 	const { username, password } = req.body;
 	const hash = await bcrypt.hash(password, 10);
 	const user = new User({ username, password: hash });
@@ -65,7 +77,11 @@ app.post('/login', async (req, res) => {
 	const { username, password } = req.body;
 	const user = await User.findOne({ username });
 	if (user && await bcrypt.compare(password, user.password)) {
-		req.session.user = user;
+		req.session.user = {
+			_id: user._id,
+			username: user.username,
+			isAdmin: !!user.isAdmin // ensure boolean
+		};
 		res.redirect('/');
 	} else {
 		res.render('login', { error: 'Invalid credentials' });
@@ -364,4 +380,30 @@ app.get('/download-report', async (req, res) => {
 
 app.listen(3000, () => {
 	console.log('Server running on http://localhost:3000');
+});
+// Admin user management routes
+app.get('/admin/users', async (req, res) => {
+	if (!req.session.user) {
+		return res.status(401).send('<h2>Admin access required</h2><p>Please <a href="/login">login</a> as an admin user.</p>');
+	}
+	if (!isAdmin(req)) {
+		return res.status(403).send('<h2>Forbidden</h2><p>You must be logged in as an admin to access this page.</p>');
+	}
+	const users = await User.find();
+	res.render('admin-users', { users });
+});
+
+app.post('/admin/create-user', async (req, res) => {
+	if (!isAdmin(req)) return res.status(403).send('Forbidden: Admins only');
+	const { username, password, isAdmin } = req.body;
+	const hash = await bcrypt.hash(password, 10);
+	const user = new User({ username, password: hash, isAdmin: isAdmin === 'true' });
+	await user.save();
+	res.redirect('/admin/users');
+});
+
+app.post('/admin/delete-user/:id', async (req, res) => {
+	if (!isAdmin(req)) return res.status(403).send('Forbidden: Admins only');
+	await User.findByIdAndDelete(req.params.id);
+	res.redirect('/admin/users');
 });
