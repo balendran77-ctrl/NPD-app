@@ -101,20 +101,27 @@ app.get('/report', async (req, res) => {
 	let filter = {};
 
 	// Filter by status
-	if (status) {
-		if (status === 'Sample request given') {
-			filter.deliveredDate = { $in: [null, ''] };
-		} else if (status === 'Sample submitted for Approval') {
-			filter.deliveredDate = { $ne: null };
-			filter.approvalStatus = { $in: [null, '', undefined] };
-		} else if (status === 'Sample approved') {
-			filter.approvalStatus = 'Approved';
-		} else if (status === 'Sample rejected') {
-			filter.approvalStatus = 'Rejected';
-		} else if (status === 'Submit fresh sample') {
-			filter.approvalStatus = 'Resample';
-		}
-	}
+       if (status) {
+	       if (status === 'Sample request given') {
+		       filter.deliveredDate = { $in: [null, ''] };
+	       } else if (status === 'Sample submitted for Approval') {
+		       filter.deliveredDate = { $ne: null };
+		       filter.approvalStatus = { $in: [null, '', undefined] };
+	       } else if (status === 'Sample approved') {
+		       filter.approvalStatus = 'Approved';
+	       } else if (status === 'Sample rejected') {
+		       filter.approvalStatus = 'Rejected';
+	       } else if (status === 'Submit fresh sample') {
+		       filter.approvalStatus = 'Resample';
+	       } else if (status === 'Waiting for approval') {
+		       filter.deliveredDate = { $ne: null };
+		       filter.approvalStatus = { $in: [null, '', undefined] };
+	       } else if (status === 'HOLD by customer') {
+		       filter.approvalStatus = 'HOLD by customer';
+	       } else if (status === 'Hold by Marketing team') {
+		       filter.approvalStatus = 'Hold by Marketing team';
+	       }
+       }
 
 	// Filter by date range
 	if (fromDate && toDate) {
