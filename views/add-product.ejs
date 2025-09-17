@@ -54,16 +54,23 @@
         <input type="text" name="printingType" placeholder="Type of Printing"><br>
         <input type="text" name="colorsToBePrinted" placeholder="Colors to be Printed"><br>
         <h3>Sample Details</h3>
-        <select name="sampleType">
+        <label for="sampleType">Type of Sample <span style="color:red">*</span></label>
+        <select name="sampleType" id="sampleType" required>
+            <option value="">--Select--</option>
             <option value="FAI">FAI</option>
             <option value="Size and spec">Size and spec</option>
             <option value="Only size">Only size</option>
         </select><br>
-        <input type="text" name="noOfSamples" placeholder="No of Samples Required"><br>
-        <input type="date" name="requiredDate" placeholder="Required Date"><br>
-        <input type="text" name="deliveryAddress" placeholder="Delivery Address"><br>
-        <input type="text" name="customerContact" placeholder="Customer Contact"><br>
-        <input type="text" name="contactNo" placeholder="Contact No"><br>
+        <label for="noOfSamples">No of Samples Required <span style="color:red">*</span></label>
+        <input type="text" name="noOfSamples" id="noOfSamples" placeholder="No of Samples Required" required><br>
+        <label for="requiredDate">Required Date <span style="color:red">*</span></label>
+        <input type="date" name="requiredDate" id="requiredDate" placeholder="Required Date" required><br>
+        <label for="deliveryAddress">Delivery Address <span style="color:red">*</span></label>
+        <input type="text" name="deliveryAddress" id="deliveryAddress" placeholder="Delivery Address" required><br>
+        <label for="customerContact">Customer Contact <span style="color:red">*</span></label>
+        <input type="text" name="customerContact" id="customerContact" placeholder="Customer Contact" required><br>
+        <label for="contactNo">Contact No <span style="color:red">*</span></label>
+        <input type="text" name="contactNo" id="contactNo" placeholder="Contact No" required><br>
         <button type="submit">Add Product</button>
     </form>
         <a href="/products">View Products</a> |

@@ -156,12 +156,12 @@ const productSchema = new mongoose.Schema({
 		type: String,
 		colors: String
 	}, { _id: false }),
-	sampleType: String, // FAI, Size and spec, only size
-	noOfSamples: String,
-	requiredDate: String,
-	deliveryAddress: String,
-	customerContact: String,
-	contactNo: String,
+	sampleType: { type: String, required: true }, // FAI, Size and spec, only size
+	noOfSamples: { type: String, required: true },
+	requiredDate: { type: String, required: true },
+	deliveryAddress: { type: String, required: true },
+	customerContact: { type: String, required: true },
+	contactNo: { type: String, required: true },
 	createdBy: String,
 	deliveredDate: String,
 	dcDetails: String,

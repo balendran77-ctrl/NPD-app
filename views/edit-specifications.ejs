@@ -74,6 +74,16 @@
             <label for="weight">Weight</label>
             <input type="text" id="weight" name="weight" value="<%= product.specifications.weight %>">
 
+            <h3>Printing</h3>
+            <label for="noOfColors">No of Colors Printing</label>
+            <input type="text" id="noOfColors" name="noOfColors" value="<%= product.printing && product.printing.noOfColors ? product.printing.noOfColors : '' %>">
+
+            <label for="printingType">Type of Printing</label>
+            <input type="text" id="printingType" name="printingType" value="<%= product.printing && product.printing.type ? product.printing.type : '' %>">
+
+            <label for="colorsToBePrinted">Colors to be Printed</label>
+            <input type="text" id="colorsToBePrinted" name="colorsToBePrinted" value="<%= product.printing && product.printing.colors ? product.printing.colors : '' %>">
+
             <label for="drawing">Drawing/Photo</label>
             <input type="file" id="drawing" name="drawing">
             <% if (product.drawingPath) { %>
