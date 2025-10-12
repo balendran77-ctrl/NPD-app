@@ -3,63 +3,7 @@
 <head>
     <title>Products</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <style>
-        body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f9f9f9; }
-        h2 { text-align: center; margin-top: 20px; }
-        ul { list-style: none; padding: 0; }
-        li { background: #fff; margin: 10px 5vw; padding: 15px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.07); font-size: 1rem; }
-        a { display: inline-block; margin: 10px; color: #007bff; text-decoration: none; font-size: 1.1rem; }
-        @media (max-width: 600px) {
-            li { margin: 10px 2vw; font-size: 0.95rem; padding: 10px; }
-            h2 { font-size: 1.3rem; }
-            a { font-size: 1rem; }
-        }
-    </style>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background: #f9f9f9;
-        }
-        h2 {
-            text-align: center;
-            margin-top: 20px;
-        }
-        ul {
-            list-style: none;
-            padding: 0;
-        }
-        li {
-            background: #fff;
-            margin: 10px 5vw;
-            padding: 15px;
-            border-radius: 8px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.07);
-            font-size: 1rem;
-        }
-        a {
-            display: inline-block;
-            margin: 10px;
-            color: #007bff;
-            text-decoration: none;
-            font-size: 1.1rem;
-        }
-        @media (max-width: 600px) {
-            li {
-                margin: 10px 2vw;
-                font-size: 0.95rem;
-                padding: 10px;
-            }
-            h2 {
-                font-size: 1.3rem;
-            }
-            a {
-                font-size: 1rem;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
     <% function formatDate(dateStr) {
@@ -71,7 +15,7 @@
         var yyyy = d.getFullYear();
         return mm + '-' + dd + '-' + yyyy;
     } %>
-    <a href="/" style="position: absolute; top: 18px; right: 24px; color: #007bff; text-decoration: none; font-weight: bold; font-size: 1.1rem;">Home</a>
+    <a href="/" class="header-link">Home</a>
     <h2>Products</h2>
     <ul>
         <% products.forEach(function(product, idx) { %>
@@ -129,7 +73,7 @@
                         <strong>Drawing/Photo:</strong><br>
                         <img src="<%= product.drawingPath %>" alt="Drawing/Photo" style="max-width:100%;max-height:200px;">
                         <br>
-                        <a href="<%= product.drawingPath %>" download="<%= product.drawingOriginalName || '' %>" style="color:#007bff;font-weight:bold;">Download Drawing/Photo</a>
+                        <a href="<%= product.drawingPath %>" download="<%= product.drawingOriginalName || '' %>">Download Drawing/Photo</a>
                     </div>
                 <% } %>
                 <a href="/update-product/<%= product._id %>">Update Delivery/Approval</a>

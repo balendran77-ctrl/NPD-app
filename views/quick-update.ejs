@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Quick Update - Delivery/Approval</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <div class="container card">
+        <h2>Quick Update - Delivery / Approval</h2>
+        <form method="get" action="/quick-update" class="hstack" style="margin-bottom:12px;">
+            <input type="text" name="q" placeholder="Search by customer or product" value="<%= typeof q !== 'undefined' ? q : '' %>" class="flex-1">
+            <div class="hstack">
+                <button type="submit">Search</button>
+                <a href="/quick-update">Clear</a>
+            </div>
+        </form>
+
+        <table class="responsive-table">
+            <thead>
+                <tr>
+                    <th>Sl</th>
+                    <th>Customer</th>
+                    <th>Product</th>
+                    <th>Delivered Date</th>
+                    <th>Approval Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% products.forEach((p, idx) => { %>
+                    <tr>
+                        <td data-label="Sl"><%= idx + 1 %></td>
+                        <td data-label="Customer"><%= p.customerName %></td>
+                        <td data-label="Product"><%= p.productName %></td>
+                        <td data-label="Delivered Date"><%= p.deliveredDate || '-' %></td>
+                        <td data-label="Approval Status"><%= p.approvalStatus || '-' %></td>
+                        <td data-label="Action"><a href="/update-product/<%= p._id %>">Update</a></td>
+                    </tr>
+                <% }) %>
+            </tbody>
+        </table>
+        <div id="loading" style="display:none;text-align:center;margin-top:12px;">Loading...</div>
+        <p><a href="/">Back to Home</a></p>
+    </div>
+    <script>
+        (function(){
+            const tableBody = document.querySelector('table.responsive-table tbody');
+            const loadingEl = document.getElementById('loading');
+            let page = <%- JSON.stringify(typeof page !== 'undefined' ? page : 1) %>;
+            const limit = <%- JSON.stringify(typeof limit !== 'undefined' ? limit : 20) %>;
+            const totalPages = <%- JSON.stringify(typeof totalPages !== 'undefined' ? totalPages : 1) %>;
+            let q = <%- JSON.stringify(typeof q !== 'undefined' ? q : '') %>;
+            let loading = false;
+
+            function renderRows(products, appendIndexStart) {
+                products.forEach((p, idx) => {
+                    const tr = document.createElement('tr');
+                    const sl = document.createElement('td'); sl.setAttribute('data-label','Sl'); sl.textContent = appendIndexStart + idx;
+                    const cust = document.createElement('td'); cust.setAttribute('data-label','Customer'); cust.textContent = p.customerName || '-';
+                    const prod = document.createElement('td'); prod.setAttribute('data-label','Product'); prod.textContent = p.productName || '-';
+                    const del = document.createElement('td'); del.setAttribute('data-label','Delivered Date'); del.textContent = p.deliveredDate || '-';
+                    const stat = document.createElement('td'); stat.setAttribute('data-label','Approval Status'); stat.textContent = p.approvalStatus || '-';
+                    const act = document.createElement('td'); act.setAttribute('data-label','Action'); act.innerHTML = `<a href="/update-product/${p._id}">Update</a>`;
+                    tr.appendChild(sl); tr.appendChild(cust); tr.appendChild(prod); tr.appendChild(del); tr.appendChild(stat); tr.appendChild(act);
+                    tableBody.appendChild(tr);
+                });
+            }
+
+            async function loadNext() {
+                if (loading) return;
+                if (page >= totalPages) return;
+                loading = true; loadingEl.style.display = 'block';
+                try {
+                    const nextPage = page + 1;
+                    const url = `/quick-update-data?page=${nextPage}&limit=${limit}&q=${encodeURIComponent(q)}`;
+                    const resp = await fetch(url, { credentials: 'same-origin' });
+                    if (!resp.ok) { loading = false; loadingEl.style.display='none'; return; }
+                    const data = await resp.json();
+                    renderRows(data.products, (page * limit) + 1);
+                    page = data.page;
+                } catch (err) {
+                    console.error(err);
+                }
+                loading = false; loadingEl.style.display = 'none';
+            }
+
+            // infinite scroll trigger
+            window.addEventListener('scroll', () => {
+                if (loading) return;
+                const threshold = 300; // px from bottom
+                if (window.innerHeight + window.pageYOffset >= document.body.offsetHeight - threshold) {
+                    loadNext();
+                }
+            });
+        })();
+    </script>
+</body>
+</html>

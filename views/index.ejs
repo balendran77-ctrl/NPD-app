@@ -3,30 +3,29 @@
 <head>
     <title>Home</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <style>
-        body { font-family: Arial, sans-serif; background: #f9f9f9; margin: 0; padding: 0; }
-        h2 { text-align: center; margin-top: 20px; }
-        a { display: inline-block; margin: 10px; color: #007bff; text-decoration: none; font-size: 1.1rem; }
-        @media (max-width: 600px) {
-            h2 { font-size: 1.3rem; }
-            a { font-size: 1rem; }
-        }
-    </style>
+    <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
+    <div class="container">
     <% if (user) { %>
-    <h2>Welcome RPPL Team!</h2>
-        <a href="/add-product">Add Product</a> |
-        <a href="/products">View Products</a> |
-        <a href="/edit-specifications">Edit Specifications</a> |
-        <a href="/report">Report</a> |
-        <% if (user.isAdmin) { %>
-            <a href="/admin/users">Admin Management</a> |
-        <% } %>
-        <a href="/logout">Logout</a>
+        <h2>Welcome RPPL Team!</h2>
+        <div class="nav">
+            <a href="/add-product">Add Product</a>
+            <a href="/products">View Products</a>
+            <a href="/edit-specifications">Edit Specifications</a>
+            <a href="/quick-update">Update Delivery or Approval</a>
+            <a href="/report">Report</a>
+            <% if (user.isAdmin) { %>
+                <a href="/admin/users">Admin Management</a>
+            <% } %>
+            <a href="/logout">Logout</a>
+        </div>
     <% } else { %>
-        <a href="/login">Login</a> |
-        <a href="/register">Register</a>
+        <div class="nav">
+            <a href="/login">Login</a>
+            <a href="/register">Register</a>
+        </div>
     <% } %>
+    </div>
 </body>
 </html>

@@ -30,10 +30,43 @@ const upload = multer({ storage });
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Connect to MongoDB (replace with your connection string)
-mongoose.connect('mongodb+srv://balendran77_db_user:nGQNOnk9WiAWb2Ak@clusternpd.l1uhkka.mongodb.net/productdev?retryWrites=true&w=majority&appName=ClusterNPD', { useNewUrlParser: true, useUnifiedTopology: true });
+const mongoUri = 'mongodb+srv://balendran77_db_user:nGQNOnk9WiAWb2Ak@clusternpd.l1uhkka.mongodb.net/productdev?retryWrites=true&w=majority&appName=ClusterNPD';
+// Start the server only after successful DB connection to avoid race conditions
+mongoose.connect(mongoUri)
+	.then(() => {
+		// DB connected, start server with port fallback
+		const startServer = (port, attemptsLeft = 5) => {
+			// bind explicitly to IPv4 loopback to avoid IPv6 '::' conflicts
+			const host = '127.0.0.1';
+			const server = app.listen(port, host, () => {
+				console.log(`Server running on http://${host}:${port}`);
+			});
+
+			server.on('error', (err) => {
+				if (err && err.code === 'EADDRINUSE' && attemptsLeft > 0) {
+					console.error(`Port ${port} is in use, trying ${port + 1}...`);
+					// try next port after a short delay
+					setTimeout(() => startServer(port + 1, attemptsLeft - 1), 200);
+				} else {
+					console.error('Server error:', err);
+					process.exit(1);
+				}
+			});
+		};
+
+		const initialPort = parseInt(process.env.PORT, 10) || 3000;
+		startServer(initialPort);
+	})
+	.catch(err => {
+		// Log connection error and exit - use console.error so it's visible in logs
+		console.error('MongoDB connection error:', err);
+		process.exit(1);
+	});
 // Middleware
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(session({ secret: 'your_secret', resave: false, saveUninitialized: true }));
+// Serve static assets (CSS, client JS, images)
+app.use(express.static(path.join(__dirname, 'public')));
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
@@ -238,6 +271,55 @@ app.get('/edit-specifications', async (req, res) => {
 	res.render('select-product', { products });
 });
 
+// Quick update list: a simplified product list with direct links to update delivery/approval
+app.get('/quick-update', async (req, res) => {
+	if (!req.session.user) return res.redirect('/login');
+	const { q = '' } = req.query; // search query
+	let filter = {};
+	if (q && q.trim() !== '') {
+		const regex = new RegExp(q.trim(), 'i');
+		filter.$or = [
+			{ customerName: regex },
+			{ productName: regex }
+		];
+	}
+	// pagination
+	const page = Math.max(parseInt(req.query.page || '1', 10), 1);
+	const limit = Math.max(parseInt(req.query.limit || '20', 10), 1);
+	const total = await Product.countDocuments(filter);
+	const totalPages = Math.max(Math.ceil(total / limit), 1);
+	const products = await Product.find(filter)
+		.skip((page - 1) * limit)
+		.limit(limit)
+		.lean();
+
+	res.render('quick-update', { products, q, page, totalPages, limit, total });
+});
+
+// JSON endpoint used by infinite scroll on quick-update page
+app.get('/quick-update-data', async (req, res) => {
+	if (!req.session.user) return res.status(401).json({ error: 'Unauthorized' });
+	const { q = '' } = req.query; // search query
+	let filter = {};
+	if (q && q.trim() !== '') {
+		const regex = new RegExp(q.trim(), 'i');
+		filter.$or = [
+			{ customerName: regex },
+			{ productName: regex }
+		];
+	}
+	const page = Math.max(parseInt(req.query.page || '1', 10), 1);
+	const limit = Math.max(parseInt(req.query.limit || '20', 10), 1);
+	const total = await Product.countDocuments(filter);
+	const totalPages = Math.max(Math.ceil(total / limit), 1);
+	const products = await Product.find(filter)
+		.skip((page - 1) * limit)
+		.limit(limit)
+		.lean();
+
+	res.json({ products, page, totalPages, limit, total });
+});
+
 // Route to show edit form for a selected product
 app.get('/edit-specifications/:id', async (req, res) => {
 	if (!req.session.user) return res.redirect('/login');
@@ -385,9 +467,7 @@ app.get('/download-report', async (req, res) => {
 	res.send(buf);
 });
 
-app.listen(3000, () => {
-	console.log('Server running on http://localhost:3000');
-});
+app.listen(3000);
 // Admin user management routes
 app.get('/admin/users', async (req, res) => {
 	if (!req.session.user) {

@@ -3,31 +3,19 @@
 <head>
     <title>Add Product</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <style>
-        body { font-family: Arial, sans-serif; background: #f9f9f9; margin: 0; padding: 0; }
-        h2 { text-align: center; margin-top: 20px; }
-        form { max-width: 500px; margin: 0 auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.07); }
-        label, input, select, button { display: block; width: 100%; margin-top: 10px; }
-        input, select { padding: 8px; border-radius: 4px; border: 1px solid #ccc; }
-        button { background: #007bff; color: #fff; border: none; border-radius: 4px; padding: 10px; font-size: 1rem; margin-top: 20px; }
-        a { display: inline-block; margin: 10px 0; color: #007bff; text-decoration: none; font-size: 1.1rem; }
-        @media (max-width: 600px) {
-            form { padding: 10px; margin: 0 5px; }
-            h2 { font-size: 1.3rem; }
-            button, a { font-size: 1rem; }
-        }
-    </style>
+    <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
-    <a href="/" style="position: absolute; top: 18px; right: 24px; color: #007bff; text-decoration: none; font-weight: bold; font-size: 1.1rem;">Home</a>
+    <div class="container">
+    <a href="/" class="header-link">Home</a>
     <h2>Add Product</h2>
-    <form method="post" action="/add-product">
+    <form method="post" action="/add-product" class="form-card">
         <div><strong>Sl. No:</strong> (auto-generated after submission)</div>
         <input type="text" name="personName" placeholder="Person Entering Data" required><br>
         <input type="text" name="customerName" placeholder="Customer Name" required><br>
         <input type="text" name="productName" placeholder="Product Name" required><br>
         <h3>Specifications</h3>
-        <div style="display: flex; gap: 8px;">
+        <div style="display:flex;gap:8px;">
             <input type="text" name="length" placeholder="Length" style="width: 80px;">
             <input type="text" name="width" placeholder="Width" style="width: 80px;">
             <input type="text" name="height" placeholder="Height" style="width: 80px;">
@@ -36,9 +24,6 @@
                 <option value="CM">CM</option>
                 <option value="INCH">INCH</option>
             </select>
-            <script>
-                document.querySelector('select[name="unitOfMeasurement"]').setAttribute('required', 'required');
-            </script>
             </select>
         </div><br>
         <input type="text" name="ply" placeholder="Ply"><br>
@@ -49,31 +34,34 @@
         <input type="text" name="FCT" placeholder="FCT"><br>
         <input type="text" name="moisture" placeholder="Moisture"><br>
         <input type="text" name="weight" placeholder="Weight"><br>
-        <h3>Printing</h3>
+    <h3>Printing</h3>
         <input type="text" name="noOfColors" placeholder="No of Colors Printing"><br>
         <input type="text" name="printingType" placeholder="Type of Printing"><br>
         <input type="text" name="colorsToBePrinted" placeholder="Colors to be Printed"><br>
-        <h3>Sample Details</h3>
-        <label for="sampleType">Type of Sample <span style="color:red">*</span></label>
+    <h3>Sample Details</h3>
+    <label for="sampleType">Type of Sample <span class="required-star">*</span></label>
         <select name="sampleType" id="sampleType" required>
             <option value="">--Select--</option>
             <option value="FAI">FAI</option>
             <option value="Size and spec">Size and spec</option>
             <option value="Only size">Only size</option>
         </select><br>
-        <label for="noOfSamples">No of Samples Required <span style="color:red">*</span></label>
+        <label for="noOfSamples">No of Samples Required <span class="required-star">*</span></label>
         <input type="text" name="noOfSamples" id="noOfSamples" placeholder="No of Samples Required" required><br>
-        <label for="requiredDate">Required Date <span style="color:red">*</span></label>
+        <label for="requiredDate">Required Date <span class="required-star">*</span></label>
         <input type="date" name="requiredDate" id="requiredDate" placeholder="Required Date" required><br>
-        <label for="deliveryAddress">Delivery Address <span style="color:red">*</span></label>
+        <label for="deliveryAddress">Delivery Address <span class="required-star">*</span></label>
         <input type="text" name="deliveryAddress" id="deliveryAddress" placeholder="Delivery Address" required><br>
-        <label for="customerContact">Customer Contact <span style="color:red">*</span></label>
+        <label for="customerContact">Customer Contact <span class="required-star">*</span></label>
         <input type="text" name="customerContact" id="customerContact" placeholder="Customer Contact" required><br>
-        <label for="contactNo">Contact No <span style="color:red">*</span></label>
+        <label for="contactNo">Contact No <span class="required-star">*</span></label>
         <input type="text" name="contactNo" id="contactNo" placeholder="Contact No" required><br>
         <button type="submit">Add Product</button>
     </form>
+    <div style="margin-top:12px;">
         <a href="/products">View Products</a> |
         <a href="/edit-specifications">Edit Specifications</a>
+    </div>
+    </div>
 </body>
 </html>

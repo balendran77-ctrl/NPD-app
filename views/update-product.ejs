@@ -3,23 +3,13 @@
 <head>
     <title>Update Delivery/Approval</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <style>
-        body { font-family: Arial, sans-serif; background: #f9f9f9; margin: 0; padding: 0; }
-        form { max-width: 500px; margin: 30px auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.07); }
-        label, input, select, button { display: block; width: 100%; margin-top: 10px; }
-        input, select { padding: 8px; border-radius: 4px; border: 1px solid #ccc; }
-        button { background: #007bff; color: #fff; border: none; border-radius: 4px; padding: 10px; font-size: 1rem; margin-top: 20px; }
-        a { display: inline-block; margin: 10px 0; color: #007bff; text-decoration: none; font-size: 1.1rem; }
-        @media (max-width: 600px) {
-            form { padding: 10px; margin: 0 5px; }
-            button, a { font-size: 1rem; }
-        }
-    </style>
+    <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
-    <a href="/" style="position: absolute; top: 18px; right: 24px; color: #007bff; text-decoration: none; font-weight: bold; font-size: 1.1rem;">Home</a>
+    <div class="container">
+    <a href="/" class="header-link">Home</a>
     <h2>Update Delivery/Approval for <%= product.productName %></h2>
-    <form method="post" action="/update-product/<%= product._id %>">
+    <form method="post" action="/update-product/<%= product._id %>" class="form-card">
         <label>Delivered Date:</label>
         <input type="date" name="deliveredDate" value="<%= product.deliveredDate %>"><br>
         <label for="dcDetails">DC Details:</label>
@@ -30,6 +20,7 @@
         <input type="date" name="approvedDate" value="<%= product.approvedDate %>"><br>
         <label>Approval Status:</label>
         <select name="approvalStatus">
+            <option value="" <%= !product.approvalStatus ? 'selected' : '' %> >-- Select status --</option>
             <option value="Approved" <%= product.approvalStatus === 'Approved' ? 'selected' : '' %>>Approved</option>
             <option value="Rejected" <%= product.approvalStatus === 'Rejected' ? 'selected' : '' %>>Rejected</option>
             <option value="Resample" <%= product.approvalStatus === 'Resample' ? 'selected' : '' %>>Resample</option>
@@ -37,8 +28,8 @@
         <label>Rejection Reason:</label>
         <input type="text" name="rejectionReason" value="<%= product.rejectionReason %>"><br>
 
-        <hr>
-        <h3>Status Update</h3>
+    <hr>
+    <h3>Status Update</h3>
         <label for="statusDate">Status as on Date:</label>
         <input type="date" id="statusDate" name="statusDate"><br>
         <label for="status">Status:</label>
@@ -47,7 +38,10 @@
         <textarea id="statusDetails" name="statusDetails" rows="2"></textarea><br>
         <button type="submit">Update</button>
     </form>
-    <a href="/products">Back to Products</a> |
-    <a href="/edit-specifications">Edit Specifications</a>
+    <div style="margin-top:12px;">
+        <a href="/products">Back to Products</a> |
+        <a href="/edit-specifications">Edit Specifications</a>
+    </div>
+    </div>
 </body>
 </html>
