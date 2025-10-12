@@ -29,8 +29,14 @@ const upload = multer({ storage });
 // Serve uploaded files statically
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Connect to MongoDB (replace with your connection string)
-const mongoUri = 'mongodb+srv://balendran77_db_user:nGQNOnk9WiAWb2Ak@clusternpd.l1uhkka.mongodb.net/productdev?retryWrites=true&w=majority&appName=ClusterNPD';
+// MongoDB connection string - prefer environment variable for security.
+// Set MONGO_URI in your Render (or other host) environment to avoid embedding secrets in source.
+const mongoUri = process.env.MONGO_URI || 'mongodb+srv://balendran77_db_user:nGQNOnk9WiAWb2Ak@clusternpd.l1uhkka.mongodb.net/productdev?retryWrites=true&w=majority&appName=ClusterNPD';
+if (process.env.MONGO_URI) {
+	console.log('Using MongoDB URI from environment (MONGO_URI)');
+} else {
+	console.log('Using fallback MongoDB URI from source (consider setting MONGO_URI env var)');
+}
 // Start the server only after successful DB connection to avoid race conditions
 mongoose.connect(mongoUri)
 	.then(() => {
