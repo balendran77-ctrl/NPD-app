@@ -67,6 +67,11 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(session({ secret: 'your_secret', resave: false, saveUninitialized: true }));
 // Serve static assets (CSS, client JS, images)
 app.use(express.static(path.join(__dirname, 'public')));
+// Make the logged-in user available in all views via res.locals
+app.use((req, res, next) => {
+	res.locals.user = req.session.user || null;
+	next();
+});
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
@@ -115,7 +120,13 @@ app.post('/login', async (req, res) => {
 			username: user.username,
 			isAdmin: !!user.isAdmin // ensure boolean
 		};
-		res.redirect('/');
+		// Save the session before redirecting to ensure the cookie and session store are persisted
+		req.session.save(err => {
+			if (err) {
+				console.error('Session save error:', err);
+			}
+			res.redirect('/');
+		});
 	} else {
 		res.render('login', { error: 'Invalid credentials' });
 	}
@@ -264,6 +275,8 @@ app.get('/products', async (req, res) => {
 	if (!req.session.user) return res.redirect('/login');
 	const products = await Product.find();
 	res.render('products', { products });
+});
+
 // Route to show searchable product list for editing specifications
 app.get('/edit-specifications', async (req, res) => {
 	if (!req.session.user) return res.redirect('/login');
@@ -385,7 +398,6 @@ app.post('/update-product/:id', async (req, res) => {
 	}
 	res.redirect('/products');
 });
-});
 
 // Start server
 
@@ -465,9 +477,7 @@ app.get('/download-report', async (req, res) => {
 	res.setHeader('Content-Disposition', 'attachment; filename="report.xlsx"');
 	res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
 	res.send(buf);
-});
-
-app.listen(3000);
+	});
 // Admin user management routes
 app.get('/admin/users', async (req, res) => {
 	if (!req.session.user) {
