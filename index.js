@@ -36,8 +36,11 @@ mongoose.connect(mongoUri)
 	.then(() => {
 		// DB connected, start server with port fallback
 		const startServer = (port, attemptsLeft = 5) => {
-			// bind explicitly to IPv4 loopback to avoid IPv6 '::' conflicts
-			const host = '127.0.0.1';
+			// Bind to 0.0.0.0 so hosted platforms (Render, Heroku, etc.) can reach the process
+			// and their health checks detect the open port. Binding to 127.0.0.1 prevents
+			// external health checks from reaching the process in those environments.
+			const host = '0.0.0.0';
+			console.log('Binding server to host:', host, 'port:', port);
 			const server = app.listen(port, host, () => {
 				console.log(`Server running on http://${host}:${port}`);
 			});
@@ -63,8 +66,47 @@ mongoose.connect(mongoUri)
 		process.exit(1);
 	});
 // Middleware
+// If running behind a proxy (Render, Heroku, etc.) we must trust the proxy
+// so that express-session knows the original request was secure and can set
+// secure cookies. Set to 1 to trust the first proxy in the chain.
+if (process.env.NODE_ENV === 'production') {
+	app.set('trust proxy', 1);
+}
+// Configure session store. Prefer a persistent store (connect-mongo) in production.
+let MongoStore;
+try {
+	MongoStore = require('connect-mongo');
+} catch (err) {
+	MongoStore = null;
+}
+
+const sessionOptions = {
+	secret: process.env.SESSION_SECRET || 'your_secret',
+	resave: false,
+	saveUninitialized: false,
+	cookie: {
+		// secure should be true when serving over HTTPS. With a proxy (Render)
+		// set app.set('trust proxy', 1) above so this works correctly.
+		secure: process.env.NODE_ENV === 'production',
+		// Use a reasonable session lifetime (e.g., 7 days)
+		maxAge: 1000 * 60 * 60 * 24 * 7,
+		// Lax protects against CSRF while allowing top-level GET navigations
+		sameSite: 'lax'
+	}
+};
+
+if (MongoStore) {
+	sessionOptions.store = MongoStore.create({ mongoUrl: mongoUri });
+} else {
+	console.warn('\nWarning: connect-mongo not installed. Using default MemoryStore.');
+	console.warn('The default MemoryStore is not designed for production and may leak memory.');
+	console.warn('Install a production store (e.g. npm i connect-mongo) and restart to remove this warning.\n');
+}
+
 app.use(bodyParser.urlencoded({ extended: false }));
-app.use(session({ secret: 'your_secret', resave: false, saveUninitialized: true }));
+app.use(session(sessionOptions));
+console.log('Session store:', MongoStore ? 'connect-mongo (MongoDB)' : 'MemoryStore (in-memory)');
+console.log('NODE_ENV=', process.env.NODE_ENV || 'development');
 // Serve static assets (CSS, client JS, images)
 app.use(express.static(path.join(__dirname, 'public')));
 // Make the logged-in user available in all views via res.locals
@@ -84,7 +126,10 @@ const userSchema = new mongoose.Schema({
 const User = mongoose.model('User', userSchema);
 
 // Home page
+// Home page - require login to see the authenticated home UI. Unauthenticated
+// visitors are redirected to /login so they see the login screen in hosted envs.
 app.get('/', (req, res) => {
+	if (!req.session.user) return res.redirect('/login');
 	res.render('index', { user: req.session.user });
 });
 
