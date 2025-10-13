@@ -18,7 +18,7 @@
             <option value="false">No</option>
             <option value="true">Yes</option>
         </select>
-        <button type="submit">Create User</button>
+        <button type="submit" id="create-user-btn">Create User</button>
     </form>
     <h3>Existing Users</h3>
     <table class="card" style="width:100%;border-collapse:collapse;">
@@ -39,5 +39,61 @@
             <% }) %>
         </tbody>
     </table>
+        <script>
+            (function(){
+                const form = document.querySelector('form[action="/admin/create-user"]');
+                const btn = document.getElementById('create-user-btn');
+                const usersTbody = document.querySelector('table tbody');
+
+                if (!form) return;
+
+                form.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    btn.disabled = true;
+                    const formData = new FormData(form);
+                    try {
+                        const res = await fetch(form.action, {
+                            method: 'POST',
+                            headers: { 'Accept': 'application/json' },
+                            body: formData
+                        });
+                        if (res.ok) {
+                            const data = await res.json();
+                            if (data && data.success && data.user) {
+                                // Clear input fields
+                                form.querySelector('input[name="username"]').value = '';
+                                form.querySelector('input[name="password"]').value = '';
+                                form.querySelector('select[name="isAdmin"]').value = 'false';
+
+                                // Append new user row
+                                const tr = document.createElement('tr');
+                                tr.innerHTML = `<td>${escapeHtml(data.user.username)}</td><td>${data.user.isAdmin ? 'Yes' : 'No'}</td><td><form method="post" action="/admin/delete-user/${data.user._id}" style="display:inline;"><button type="submit" class="danger" onclick="return confirm('Delete user ${escapeHtml(data.user.username)}?')">Delete</button></form></td>`;
+                                usersTbody.appendChild(tr);
+                            } else {
+                                alert('User created but unexpected response format.');
+                                window.location.reload();
+                            }
+                        } else {
+                            // Non-JSON fallback: reload so server-side message appears
+                            const txt = await res.text();
+                            alert('Error: ' + (txt || res.statusText));
+                            window.location.reload();
+                        }
+                    } catch (err) {
+                        console.error('Create user error', err);
+                        alert('Network or server error while creating user');
+                    } finally {
+                        btn.disabled = false;
+                    }
+                });
+
+                // Simple HTML escape to avoid injection from server-provided values
+                function escapeHtml(s){
+                    return (s+'').replace(/[&<>"']/g, function(c){
+                        return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[c];
+                    });
+                }
+            })();
+        </script>
 </body>
 </html>

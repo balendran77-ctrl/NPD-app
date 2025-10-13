@@ -563,6 +563,11 @@ app.post('/admin/create-user', async (req, res) => {
 		const hash = await bcrypt.hash(password, 10);
 		const user = new User({ username, password: hash, isAdmin: isAdmin === 'true' });
 		await user.save();
+		// If this was an AJAX request, return JSON so the client can clear the form without a full reload
+		const wantsJson = (req.xhr || (req.headers.accept && req.headers.accept.indexOf('application/json') !== -1) || req.headers['x-requested-with'] === 'XMLHttpRequest');
+		if (wantsJson) {
+			return res.json({ success: true, user: { _id: user._id, username: user.username, isAdmin: !!user.isAdmin } });
+		}
 		return res.redirect('/admin/users');
 	} catch (err) {
 		// Log the full error to server logs for debugging (do not log sensitive fields)
