@@ -50,12 +50,13 @@
                 form.addEventListener('submit', async (e) => {
                     e.preventDefault();
                     btn.disabled = true;
-                    const formData = new FormData(form);
+                    // Serialize form as application/x-www-form-urlencoded so express.urlencoded() can parse it
+                    const entries = new URLSearchParams(new FormData(form)).toString();
                     try {
                         const res = await fetch(form.action, {
                             method: 'POST',
-                            headers: { 'Accept': 'application/json' },
-                            body: formData
+                            headers: { 'Accept': 'application/json', 'Content-Type': 'application/x-www-form-urlencoded' },
+                            body: entries
                         });
                         if (res.ok) {
                             const data = await res.json();
