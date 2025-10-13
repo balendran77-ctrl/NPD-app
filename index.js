@@ -139,6 +139,15 @@ app.get('/', (req, res) => {
 	res.render('index', { user: req.session.user });
 });
 
+// Debug endpoint: return current session info (useful when testing on Render)
+app.get('/whoami', (req, res) => {
+	res.json({
+		sessionId: req.sessionID || null,
+		user: req.session && req.session.user ? req.session.user : null,
+		cookies: req.headers.cookie || null
+	});
+});
+
 // Register
 // Only allow admin to access registration
 function isAdmin(req) {
