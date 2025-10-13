@@ -553,11 +553,22 @@ app.get('/admin/users', async (req, res) => {
 
 app.post('/admin/create-user', async (req, res) => {
 	if (!isAdmin(req)) return res.status(403).send('Forbidden: Admins only');
-	const { username, password, isAdmin } = req.body;
-	const hash = await bcrypt.hash(password, 10);
-	const user = new User({ username, password: hash, isAdmin: isAdmin === 'true' });
-	await user.save();
-	res.redirect('/admin/users');
+	try {
+		const { username, password, isAdmin } = req.body;
+		// Basic validation
+		if (!username || !password) {
+			return res.status(400).send('Username and password are required');
+		}
+
+		const hash = await bcrypt.hash(password, 10);
+		const user = new User({ username, password: hash, isAdmin: isAdmin === 'true' });
+		await user.save();
+		return res.redirect('/admin/users');
+	} catch (err) {
+		// Log the full error to server logs for debugging (do not log sensitive fields)
+		console.error('Error in /admin/create-user:', err && err.stack ? err.stack : err);
+		return res.status(500).send('Internal server error while creating user');
+	}
 });
 
 app.post('/admin/delete-user/:id', async (req, res) => {
