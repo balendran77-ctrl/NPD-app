@@ -94,10 +94,11 @@ const sessionOptions = {
 		// secure should be true when serving over HTTPS. With a proxy (Render)
 		// set app.set('trust proxy', 1) above so this works correctly.
 		secure: process.env.NODE_ENV === 'production',
-		// Use a reasonable session lifetime (e.g., 7 days)
-		maxAge: 1000 * 60 * 60 * 24 * 7,
-		// Lax protects against CSRF while allowing top-level GET navigations
-		sameSite: 'lax'
+	// Do not set maxAge: leaving cookie as a session cookie means it will be
+	// cleared when the browser (or tab) is closed. This matches the user's
+	// expectation that closing the session/browser logs them out.
+	// Lax protects against CSRF while allowing top-level GET navigations
+	sameSite: 'lax'
 	}
 };
 
