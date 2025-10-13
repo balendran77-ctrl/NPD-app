@@ -74,10 +74,10 @@
                                 window.location.reload();
                             }
                         } else {
-                            // Non-JSON fallback: reload so server-side message appears
+                            // Non-OK response: try to read server message and show it. Do NOT clear the fields.
                             const txt = await res.text();
                             alert('Error: ' + (txt || res.statusText));
-                            window.location.reload();
+                            // leave form values for correction
                         }
                     } catch (err) {
                         console.error('Create user error', err);

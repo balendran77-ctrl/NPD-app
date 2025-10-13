@@ -572,7 +572,15 @@ app.post('/admin/create-user', async (req, res) => {
 	} catch (err) {
 		// Log the full error to server logs for debugging (do not log sensitive fields)
 		console.error('Error in /admin/create-user:', err && err.stack ? err.stack : err);
-		return res.status(500).send('Internal server error while creating user');
+		try {
+			console.error('Request username:', req.body && req.body.username);
+			console.error('Session user:', req.session && req.session.user ? req.session.user.username : null);
+		} catch (logErr) {
+			console.error('Error logging request/session info:', logErr);
+		}
+		// Return a helpful message (error message only) so the client can show it.
+		const publicMessage = err && err.message ? `Internal server error: ${err.message}` : 'Internal server error while creating user';
+		return res.status(500).send(publicMessage);
 	}
 });
 
