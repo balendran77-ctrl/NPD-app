@@ -34,6 +34,8 @@
                 <option value="Sample approved" <%= status==="Sample approved"?"selected":"" %>>Sample approved</option>
                 <option value="Sample rejected" <%= status==="Sample rejected"?"selected":"" %>>Sample rejected</option>
                 <option value="Submit fresh sample" <%= status==="Submit fresh sample"?"selected":"" %>>Submit fresh sample</option>
+                <option value="HOLD" <%= status==="HOLD"?"selected":"" %>>HOLD</option>
+                <option value="Cancelled" <%= status==="Cancelled"?"selected":"" %>>Cancelled</option>
             </select>
             <button type="submit">Run Report</button>
             <button type="button" onclick="downloadXLSX()" style="margin-top:10px;background:#28a745;">Download XLSX</button>

@@ -484,6 +484,14 @@ app.get('/download-report', async (req, res) => {
 			filter.approvalStatus = 'Rejected';
 		} else if (status === 'Submit fresh sample') {
 			filter.approvalStatus = 'Resample';
+		       } else if (status === 'HOLD') {
+			       filter.approvalStatus = 'HOLD';
+		       } else if (status === 'Cancelled') {
+			       filter.approvalStatus = 'Cancelled';
+		} else if (status === 'HOLD') {
+			filter.approvalStatus = 'HOLD';
+		} else if (status === 'Cancelled') {
+			filter.approvalStatus = 'Cancelled';
 		}
 	}
 

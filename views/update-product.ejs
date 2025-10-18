@@ -24,6 +24,8 @@
             <option value="Approved" <%= product.approvalStatus === 'Approved' ? 'selected' : '' %>>Approved</option>
             <option value="Rejected" <%= product.approvalStatus === 'Rejected' ? 'selected' : '' %>>Rejected</option>
             <option value="Resample" <%= product.approvalStatus === 'Resample' ? 'selected' : '' %>>Resample</option>
+            <option value="HOLD" <%= product.approvalStatus === 'HOLD' ? 'selected' : '' %>>HOLD</option>
+            <option value="Cancelled" <%= product.approvalStatus === 'Cancelled' ? 'selected' : '' %>>Cancelled</option>
         </select><br>
         <label>Rejection Reason:</label>
         <input type="text" name="rejectionReason" value="<%= product.rejectionReason %>"><br>
