@@ -8,8 +8,10 @@
 <body>
     <div class="container card">
         <h2>Quick Update - Delivery / Approval</h2>
-        <form method="get" action="/quick-update" class="hstack" style="margin-bottom:12px;">
+        <form method="get" action="/quick-update" class="hstack" style="margin-bottom:12px;gap:8px;align-items:center;">
             <input type="text" name="q" placeholder="Search by customer or product" value="<%= typeof q !== 'undefined' ? q : '' %>" class="flex-1">
+            <input type="date" name="fromDate" value="<%= typeof fromDate !== 'undefined' ? fromDate : '' %>">
+            <input type="date" name="toDate" value="<%= typeof toDate !== 'undefined' ? toDate : '' %>">
             <div class="hstack">
                 <button type="submit">Search</button>
                 <a href="/quick-update">Clear</a>

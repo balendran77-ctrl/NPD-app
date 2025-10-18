@@ -343,14 +343,28 @@ app.get('/products', async (req, res) => {
 // Route to show searchable product list for editing specifications
 app.get('/edit-specifications', async (req, res) => {
 	if (!req.session.user) return res.redirect('/login');
-	const products = await Product.find({});
-	res.render('select-product', { products });
+	const { q = '', fromDate = '', toDate = '' } = req.query;
+	let filter = {};
+	if (q && q.trim() !== '') {
+		const regex = new RegExp(q.trim(), 'i');
+		filter.$or = [ { productName: regex }, { customerName: regex } ];
+	}
+	if (fromDate && toDate) {
+		// Use createdAt (request received date) for filtering
+		const from = new Date(fromDate);
+		const to = new Date(toDate);
+		// include the entire to-day by setting time to 23:59:59
+		to.setHours(23,59,59,999);
+		filter.createdAt = { $gte: from, $lte: to };
+	}
+	const products = await Product.find(filter).lean();
+	res.render('select-product', { products, q, fromDate, toDate });
 });
 
 // Quick update list: a simplified product list with direct links to update delivery/approval
 app.get('/quick-update', async (req, res) => {
 	if (!req.session.user) return res.redirect('/login');
-	const { q = '' } = req.query; // search query
+	const { q = '', fromDate = '', toDate = '' } = req.query; // search query and dates
 	let filter = {};
 	if (q && q.trim() !== '') {
 		const regex = new RegExp(q.trim(), 'i');
@@ -358,6 +372,12 @@ app.get('/quick-update', async (req, res) => {
 			{ customerName: regex },
 			{ productName: regex }
 		];
+	}
+	if (fromDate && toDate) {
+		const from = new Date(fromDate);
+		const to = new Date(toDate);
+		to.setHours(23,59,59,999);
+		filter.createdAt = { $gte: from, $lte: to };
 	}
 	// pagination
 	const page = Math.max(parseInt(req.query.page || '1', 10), 1);
@@ -375,7 +395,7 @@ app.get('/quick-update', async (req, res) => {
 // JSON endpoint used by infinite scroll on quick-update page
 app.get('/quick-update-data', async (req, res) => {
 	if (!req.session.user) return res.status(401).json({ error: 'Unauthorized' });
-	const { q = '' } = req.query; // search query
+	const { q = '', fromDate = '', toDate = '' } = req.query; // search query and dates
 	let filter = {};
 	if (q && q.trim() !== '') {
 		const regex = new RegExp(q.trim(), 'i');
@@ -383,6 +403,12 @@ app.get('/quick-update-data', async (req, res) => {
 			{ customerName: regex },
 			{ productName: regex }
 		];
+	}
+	if (fromDate && toDate) {
+		const from = new Date(fromDate);
+		const to = new Date(toDate);
+		to.setHours(23,59,59,999);
+		filter.createdAt = { $gte: from, $lte: to };
 	}
 	const page = Math.max(parseInt(req.query.page || '1', 10), 1);
 	const limit = Math.max(parseInt(req.query.limit || '20', 10), 1);

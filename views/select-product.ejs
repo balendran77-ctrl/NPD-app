@@ -31,8 +31,9 @@
             var input = document.getElementById('searchInput').value.toLowerCase();
             var items = document.querySelectorAll('.product-item');
             items.forEach(function(item) {
-                var name = item.getAttribute('data-name').toLowerCase();
-                if (name.includes(input)) {
+                var name = (item.getAttribute('data-name') || '').toLowerCase();
+                var cust = (item.getAttribute('data-cust') || '').toLowerCase();
+                if (name.includes(input) || cust.includes(input)) {
                     item.style.display = '';
                 } else {
                     item.style.display = 'none';
@@ -45,11 +46,18 @@
     <a href="/" style="position: absolute; top: 18px; right: 24px; color: #007bff; text-decoration: none; font-weight: bold; font-size: 1.1rem;">Home</a>
     <div class="container">
         <h2>Select Product to Edit Specifications</h2>
-        <input type="text" id="searchInput" placeholder="Search by product name..." onkeyup="filterProducts()">
+        <form method="get" action="/edit-specifications" style="margin-bottom:12px;">
+            <input type="text" id="searchInput" name="q" placeholder="Search by product or customer name..." value="<%= typeof q !== 'undefined' ? q : '' %>" onkeyup="filterProducts()">
+            <div style="display:flex;gap:8px;margin-top:8px;">
+                <input type="date" name="fromDate" value="<%= typeof fromDate !== 'undefined' ? fromDate : '' %>">
+                <input type="date" name="toDate" value="<%= typeof toDate !== 'undefined' ? toDate : '' %>">
+                <button type="submit">Filter</button>
+            </div>
+        </form>
         <ul>
             <% products.forEach(function(product, idx) { %>
-                <li class="product-item" data-name="<%= product.productName %>">
-                    <strong>Sl. No:</strong> <%= idx + 1 %> - <strong>Name:</strong> <%= product.productName %>
+                <li class="product-item" data-name="<%= product.productName %>" data-cust="<%= product.customerName %>">
+                    <strong>Sl. No:</strong> <%= idx + 1 %> - <strong>Name:</strong> <%= product.productName %> - <strong>Customer:</strong> <%= product.customerName %>
                     <a href="/edit-specifications/<%= product._id %>">Edit</a>
                 </li>
             <% }); %>
