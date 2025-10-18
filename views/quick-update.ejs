@@ -8,6 +8,9 @@
 <body>
     <div class="container card">
         <h2>Quick Update - Delivery / Approval</h2>
+        <div style="display:flex;justify-content:flex-end;margin-bottom:8px;">
+            <a href="/" class="header-link" style="padding:6px 10px;background:#f0f0f0;border-radius:4px;color:#007bff;text-decoration:none;">Home</a>
+        </div>
         <form method="get" action="/quick-update" class="hstack" style="margin-bottom:12px;gap:8px;align-items:center;">
             <input type="text" name="q" placeholder="Search by customer or product" value="<%= typeof q !== 'undefined' ? q : '' %>" class="flex-1">
             <input type="date" name="fromDate" value="<%= typeof fromDate !== 'undefined' ? fromDate : '' %>">
