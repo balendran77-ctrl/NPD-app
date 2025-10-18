@@ -51,6 +51,7 @@
                 <th>Product Name</th>
                 <th>Customer Name</th>
                 <th>Person Entering Data</th>
+                <th>Request Date</th>
                 <th>Current Status</th>
                 <th>Required Date</th>
             </tr>
@@ -73,6 +74,7 @@
                             Submit fresh sample
                         <% } %>
                     </td>
+                    <td><%= product.createdAt ? new Date(product.createdAt).toISOString().slice(0,10) : '' %></td>
                     <td><%= product.requiredDate %></td>
                 </tr>
             <% }); %>

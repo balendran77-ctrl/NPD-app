@@ -238,6 +238,8 @@ app.get('/report', async (req, res) => {
 });
 
 // Product Schema
+// Enable timestamps so Mongoose adds `createdAt` (request received date) and `updatedAt` automatically.
+// `createdAt` can be used as the request received date.
 const productSchema = new mongoose.Schema({
 	personName: String,
 	customerName: String,
@@ -280,7 +282,7 @@ const productSchema = new mongoose.Schema({
 		status: String,
 		details: String
 	}]
-});
+}, { timestamps: true });
 const Product = mongoose.model('Product', productSchema);
 
 // Add Product
@@ -496,6 +498,7 @@ app.get('/download-report', async (req, res) => {
 	const data = products.map((p, idx) => ({
 		'Sl. No': idx + 1,
 		'Person Name': p.personName,
+		'Request Date': p.createdAt ? (new Date(p.createdAt)).toISOString().slice(0,10) : '',
 		'Customer Name': p.customerName,
 		'Product Name': p.productName,
 		'Ply': p.specifications?.ply,
