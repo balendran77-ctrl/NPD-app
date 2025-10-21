@@ -135,9 +135,96 @@ const User = mongoose.model('User', userSchema);
 // Home page
 // Home page - require login to see the authenticated home UI. Unauthenticated
 // visitors are redirected to /login so they see the login screen in hosted envs.
-app.get('/', (req, res) => {
+app.get('/', async (req, res) => {
 	if (!req.session.user) return res.redirect('/login');
-	res.render('index', { user: req.session.user });
+
+	try {
+		// Build dashboard: counts per category by createdAt date for the last N days
+		const days = 30;
+		const end = new Date();
+		end.setHours(23,59,59,999);
+		const start = new Date();
+		start.setHours(0,0,0,0);
+		start.setDate(start.getDate() - (days - 1));
+
+		const pipeline = [
+			{ $match: { createdAt: { $gte: start, $lte: end } } },
+			{ $project: { createdAtDate: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } }, deliveredDate: 1, approvalStatus: 1 } },
+			{ $addFields: {
+				category: {
+					$switch: {
+						branches: [
+							{ case: { $or: [ { $eq: ["$deliveredDate", null] }, { $eq: ["$deliveredDate", ""] } ] }, then: 'Sample request given' },
+							{ case: { $and: [ { $ne: ["$deliveredDate", null] }, { $in: ["$approvalStatus", [ null, '', undefined ]] } ] }, then: 'Sample submitted for Approval' },
+							{ case: { $eq: ["$approvalStatus", 'Approved'] }, then: 'Sample approved' },
+							{ case: { $eq: ["$approvalStatus", 'Resample'] }, then: 'Resample' },
+							{ case: { $eq: ["$approvalStatus", 'Rejected'] }, then: 'Sample rejected' },
+							{ case: { $eq: ["$approvalStatus", 'HOLD'] }, then: 'HOLD' },
+							{ case: { $eq: ["$approvalStatus", 'Cancelled'] }, then: 'Cancelled' }
+						],
+						default: 'Other'
+					}
+				}
+			}},
+			{ $group: { _id: { date: '$createdAtDate', category: '$category' }, count: { $sum: 1 } } },
+			{ $group: { _id: '$_id.date', counts: { $push: { k: '$_id.category', v: '$count' } } } },
+			{ $project: { date: '$_id', counts: { $arrayToObject: '$counts' }, _id: 0 } },
+			{ $sort: { date: 1 } }
+		];
+
+		const rows = await Product.aggregate(pipeline).allowDiskUse(true).exec();
+
+		// Prepare labels for each date in range
+		const labels = [];
+		const labelMap = {};
+		for (let i = 0; i < days; i++) {
+			const d = new Date(start);
+			d.setDate(start.getDate() + i);
+			const s = d.toISOString().slice(0,10);
+			labels.push(s);
+			labelMap[s] = {}; // to be filled
+		}
+
+		// categories to show
+		const categories = ['Sample request given','Sample submitted for Approval','Sample approved','Resample','Sample rejected','HOLD','Cancelled'];
+
+		// fill map with zero counts
+		labels.forEach(date => {
+			categories.forEach(c => { labelMap[date][c] = 0; });
+		});
+
+		// fill from rows
+		rows.forEach(r => {
+			const date = r.date;
+			const counts = r.counts || {};
+			if (!labelMap[date]) {
+				// skip dates outside range
+				return;
+			}
+			Object.keys(counts).forEach(k => {
+				labelMap[date][k] = counts[k];
+			});
+		});
+
+		// build datasets and totals
+		const datasets = categories.map((cat, idx) => ({
+			label: cat,
+			data: labels.map(d => labelMap[d][cat] || 0)
+		}));
+
+		const totals = {};
+		categories.forEach((cat, idx) => {
+			totals[cat] = datasets[idx].data.reduce((a,b) => a + b, 0);
+		});
+
+		const dashboard = { labels, datasets, totals };
+
+		res.render('index', { user: req.session.user, dashboard });
+	} catch (err) {
+		console.error('Error preparing dashboard:', err && err.stack ? err.stack : err);
+		// fall back to rendering without dashboard
+		res.render('index', { user: req.session.user });
+	}
 });
 
 // Debug endpoint: return current session info (useful when testing on Render)

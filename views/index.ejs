@@ -20,6 +20,49 @@
             <% } %>
             <a href="/logout">Logout</a>
         </div>
+        <% if (typeof dashboard !== 'undefined' && dashboard) { %>
+            <div class="dashboard">
+                <div class="cards">
+                    <% Object.keys(dashboard.totals).forEach(function(k){ %>
+                        <div class="card small">
+                            <div class="card-title"><%= k %></div>
+                            <div class="card-value"><%= dashboard.totals[k] %></div>
+                        </div>
+                    <% }) %>
+                </div>
+                <div style="margin-top:18px;">
+                    <canvas id="dashboardChart" height="120"></canvas>
+                </div>
+            </div>
+            <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+            <script>
+                const ctx = document.getElementById('dashboardChart').getContext('2d');
+                const labels = <%- JSON.stringify(dashboard.labels || []) %>;
+                const datasets = <%- JSON.stringify(dashboard.datasets || []) %>;
+
+                // Create a stacked bar chart
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: datasets.map((ds, i) => ({
+                            label: ds.label,
+                            data: ds.data,
+                            backgroundColor: `hsl(${(i*50)%360} 70% 50% / 0.7)`,
+                            borderColor: `hsl(${(i*50)%360} 70% 40%)`,
+                            borderWidth: 1
+                        }))
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            x: { stacked: true },
+                            y: { stacked: true, beginAtZero: true }
+                        }
+                    }
+                });
+            </script>
+        <% } %>
     <% } else { %>
         <div class="nav">
             <a href="/login">Login</a>
