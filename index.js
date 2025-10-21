@@ -162,28 +162,34 @@ app.get('/', async (req, res) => {
 			return res.render('index', { user: req.session.user, dashboard: cached.data, range });
 		}
 
+		// Build aggregation that counts total requests per createdAtDate (Sample request given)
+		// and separately counts specific status categories using conditional sums.
 		const pipeline = [
 			{ $match: { createdAt: { $gte: start, $lte: end } } },
 			{ $project: { createdAtDate: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } }, deliveredDate: 1, approvalStatus: 1 } },
-			{ $addFields: {
-				category: {
-					$switch: {
-						branches: [
-							{ case: { $or: [ { $eq: ["$deliveredDate", null] }, { $eq: ["$deliveredDate", ""] } ] }, then: 'Sample request given' },
-							{ case: { $and: [ { $ne: ["$deliveredDate", null] }, { $in: ["$approvalStatus", [ null, '', undefined ]] } ] }, then: 'Sample submitted for Approval' },
-							{ case: { $eq: ["$approvalStatus", 'Approved'] }, then: 'Sample approved' },
-							{ case: { $eq: ["$approvalStatus", 'Resample'] }, then: 'Resample' },
-							{ case: { $eq: ["$approvalStatus", 'Rejected'] }, then: 'Sample rejected' },
-							{ case: { $eq: ["$approvalStatus", 'HOLD'] }, then: 'HOLD' },
-							{ case: { $eq: ["$approvalStatus", 'Cancelled'] }, then: 'Cancelled' }
-						],
-						default: 'Other'
-					}
-				}
-			}},
-			{ $group: { _id: { date: '$createdAtDate', category: '$category' }, count: { $sum: 1 } } },
-			{ $group: { _id: '$_id.date', counts: { $push: { k: '$_id.category', v: '$count' } } } },
-			{ $project: { date: '$_id', counts: { $arrayToObject: '$counts' }, _id: 0 } },
+			{ $group: {
+				_id: '$createdAtDate',
+				totalRequests: { $sum: 1 },
+				submittedForApproval: { $sum: { $cond: [ { $and: [ { $ne: ["$deliveredDate", null] }, { $ne: ["$deliveredDate", ""] }, { $or: [ { $eq: ["$approvalStatus", null] }, { $eq: ["$approvalStatus", ""] } ] } ] }, 1, 0 ] } },
+				approved: { $sum: { $cond: [ { $eq: ["$approvalStatus", 'Approved'] }, 1, 0 ] } },
+				resample: { $sum: { $cond: [ { $eq: ["$approvalStatus", 'Resample'] }, 1, 0 ] } },
+				rejected: { $sum: { $cond: [ { $eq: ["$approvalStatus", 'Rejected'] }, 1, 0 ] } },
+				hold: { $sum: { $cond: [ { $regexMatch: { input: "$approvalStatus", regex: "hold", options: "i" } }, 1, 0 ] } },
+				cancelled: { $sum: { $cond: [ { $regexMatch: { input: "$approvalStatus", regex: "^cancel", options: "i" } }, 1, 0 ] } }
+			} },
+			{ $project: {
+				date: '$_id',
+				counts: {
+					'Sample request given': '$totalRequests',
+					'Sample submitted for Approval': '$submittedForApproval',
+					'Sample approved': '$approved',
+					'Resample': '$resample',
+					'Sample rejected': '$rejected',
+					'HOLD': '$hold',
+					'Cancelled': '$cancelled'
+				},
+				_id: 0
+			} },
 			{ $sort: { date: 1 } }
 		];
 
@@ -304,6 +310,12 @@ app.get('/report', async (req, res) => {
 	       } else if (status === 'Waiting for approval') {
 		       filter.deliveredDate = { $ne: null };
 		       filter.approvalStatus = { $in: [null, '', undefined] };
+	       } else if (status === 'HOLD') {
+		       // Match common HOLD variants case-insensitively
+		       filter.approvalStatus = { $regex: '^HOLD', $options: 'i' };
+	       } else if (status === 'Cancelled') {
+		       // Match both 'Cancelled' and American spelling 'Canceled' (case-insensitive)
+		       filter.approvalStatus = { $regex: '^cancel', $options: 'i' };
 	       } else if (status === 'HOLD by customer') {
 		       filter.approvalStatus = 'HOLD by customer';
 	       } else if (status === 'Hold by Marketing team') {
