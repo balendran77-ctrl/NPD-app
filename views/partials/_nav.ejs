@@ -1,13 +1,13 @@
 <nav class="main-nav">
     <a href="/">Home</a>
-    <a href="/add-product">Add Product</a>
-    <a href="/quick-update">Update Status</a>
-    <a href="/report">Reports</a>
-    <a href="/edit-specifications">Update Specifications</a>
-    <% if (user && user.isAdmin) { %>
-        <a href="/admin/users">Admin</a>
-    <% } %>
     <% if (user) { %>
+        <a href="/add-product">Add Product</a>
+        <a href="/quick-update">Update Status</a>
+        <a href="/report">Reports</a>
+        <a href="/edit-specifications">Update Specifications</a>
+        <% if (user && user.isAdmin) { %>
+            <a href="/admin/users">Admin</a>
+        <% } %>
         <a href="/logout" class="right">Logout</a>
     <% } else { %>
         <a href="/login" class="right">Login</a>
