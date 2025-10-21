@@ -1,0 +1,13 @@
+# Node
+node_modules/
+
+# Env files
+.env
+
+# Logs
+logs/
+logs/*.log
+npm-debug.log*
+
+# Uploads
+uploads/

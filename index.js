@@ -135,17 +135,32 @@ const User = mongoose.model('User', userSchema);
 // Home page
 // Home page - require login to see the authenticated home UI. Unauthenticated
 // visitors are redirected to /login so they see the login screen in hosted envs.
+// Simple in-memory cache for dashboard aggregation results
+const dashboardCache = new Map();
+const CACHE_TTL_MS = 1000 * 60 * 5; // 5 minutes
+
 app.get('/', async (req, res) => {
 	if (!req.session.user) return res.redirect('/login');
 
 	try {
-		// Build dashboard: counts per category by createdAt date for the last N days
-		const days = 30;
+		// allow range option via ?range=7|30|90
+		const allowed = [7,30,90];
+		let range = parseInt(req.query.range, 10);
+		if (!allowed.includes(range)) range = 30;
+		const days = range;
+
 		const end = new Date();
 		end.setHours(23,59,59,999);
 		const start = new Date();
 		start.setHours(0,0,0,0);
 		start.setDate(start.getDate() - (days - 1));
+
+		// Cache key based on start/end
+		const cacheKey = `dashboard:${days}:${start.toISOString().slice(0,10)}:${end.toISOString().slice(0,10)}`;
+		const cached = dashboardCache.get(cacheKey);
+		if (cached && (Date.now() - cached.ts) < CACHE_TTL_MS) {
+			return res.render('index', { user: req.session.user, dashboard: cached.data, range });
+		}
 
 		const pipeline = [
 			{ $match: { createdAt: { $gte: start, $lte: end } } },
@@ -174,7 +189,6 @@ app.get('/', async (req, res) => {
 
 		const rows = await Product.aggregate(pipeline).allowDiskUse(true).exec();
 
-		// Prepare labels for each date in range
 		const labels = [];
 		const labelMap = {};
 		for (let i = 0; i < days; i++) {
@@ -182,48 +196,30 @@ app.get('/', async (req, res) => {
 			d.setDate(start.getDate() + i);
 			const s = d.toISOString().slice(0,10);
 			labels.push(s);
-			labelMap[s] = {}; // to be filled
+			labelMap[s] = {};
 		}
 
-		// categories to show
 		const categories = ['Sample request given','Sample submitted for Approval','Sample approved','Resample','Sample rejected','HOLD','Cancelled'];
-
-		// fill map with zero counts
-		labels.forEach(date => {
-			categories.forEach(c => { labelMap[date][c] = 0; });
-		});
-
-		// fill from rows
+		labels.forEach(date => { categories.forEach(c => { labelMap[date][c] = 0; }); });
 		rows.forEach(r => {
 			const date = r.date;
 			const counts = r.counts || {};
-			if (!labelMap[date]) {
-				// skip dates outside range
-				return;
-			}
-			Object.keys(counts).forEach(k => {
-				labelMap[date][k] = counts[k];
-			});
+			if (!labelMap[date]) return;
+			Object.keys(counts).forEach(k => { labelMap[date][k] = counts[k]; });
 		});
 
-		// build datasets and totals
-		const datasets = categories.map((cat, idx) => ({
-			label: cat,
-			data: labels.map(d => labelMap[d][cat] || 0)
-		}));
-
+		const datasets = categories.map((cat, idx) => ({ label: cat, data: labels.map(d => labelMap[d][cat] || 0) }));
 		const totals = {};
-		categories.forEach((cat, idx) => {
-			totals[cat] = datasets[idx].data.reduce((a,b) => a + b, 0);
-		});
-
+		categories.forEach((cat, idx) => { totals[cat] = datasets[idx].data.reduce((a,b) => a+b, 0); });
 		const dashboard = { labels, datasets, totals };
 
-		res.render('index', { user: req.session.user, dashboard });
+		dashboardCache.set(cacheKey, { ts: Date.now(), data: dashboard });
+		res.render('index', { user: req.session.user, dashboard, range });
 	} catch (err) {
 		console.error('Error preparing dashboard:', err && err.stack ? err.stack : err);
-		// fall back to rendering without dashboard
-		res.render('index', { user: req.session.user });
+		// Render a safe fallback: ensure `range` is always provided so the EJS
+		// template doesn't throw a ReferenceError when it references `range`.
+		res.render('index', { user: req.session.user, dashboard: null, range: 30 });
 	}
 });
 
