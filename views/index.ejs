@@ -7,62 +7,76 @@
 </head>
 <body>
     <div class="container">
-    <% if (user) { %>
-        <h2>Welcome RPPL Team!</h2>
-        <div class="nav">
-            <a href="/add-product">Add Product</a>
-            <a href="/products">View Products</a>
-            <a href="/edit-specifications">Edit Specifications</a>
-            <a href="/quick-update">Update Delivery or Approval</a>
-            <a href="/report">Report</a>
-            <% if (user.isAdmin) { %>
-                <a href="/admin/users">Admin Management</a>
-            <% } %>
-            <a href="/logout">Logout</a>
-        </div>
-        <% if (typeof dashboard !== 'undefined' && dashboard) { %>
-            <div class="dashboard">
-                <div class="cards">
-                    <% Object.keys(dashboard.totals).forEach(function(k){ %>
-                        <div class="card small">
-                            <div class="card-title"><%= k %></div>
-                            <div class="card-value"><%= dashboard.totals[k] %></div>
-                        </div>
-                    <% }) %>
-                </div>
-                <div style="margin-top:18px;">
-                    <canvas id="dashboardChart" height="120"></canvas>
-                </div>
-            </div>
-            <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-            <script>
-                const ctx = document.getElementById('dashboardChart').getContext('2d');
-                const labels = <%- JSON.stringify(dashboard.labels || []) %>;
-                const datasets = <%- JSON.stringify(dashboard.datasets || []) %>;
+    <% if (dashboard) { %>
+        <h2>Dashboard (last <%= range || 30 %> days)</h2>
 
-                // Create a stacked bar chart
-                new Chart(ctx, {
-                    type: 'bar',
-                    data: {
-                        labels: labels,
-                        datasets: datasets.map((ds, i) => ({
-                            label: ds.label,
-                            data: ds.data,
-                            backgroundColor: `hsl(${(i*50)%360} 70% 50% / 0.7)`,
-                            borderColor: `hsl(${(i*50)%360} 70% 40%)`,
-                            borderWidth: 1
-                        }))
-                    },
-                    options: {
-                        responsive: true,
-                        scales: {
-                            x: { stacked: true },
-                            y: { stacked: true, beginAtZero: true }
-                        }
-                    }
-                });
-            </script>
-        <% } %>
+        <div class="dashboard-controls">
+            <form method="get" id="rangeForm">
+                <label for="range">Range:</label>
+                <select id="range" name="range" onchange="document.getElementById('rangeForm').submit()">
+                    <option value="7" <%= (parseInt(range,10)===7)?'selected':'' %>>Last 7 days</option>
+                    <option value="30" <%= (parseInt(range,10)===30)?'selected':'' %>>Last 30 days</option>
+                    <option value="90" <%= (parseInt(range,10)===90)?'selected':'' %>>Last 90 days</option>
+                </select>
+            </form>
+        </div>
+
+        <div class="dashboard-cards">
+            <% Object.keys(dashboard.totals).forEach(function(cat) { 
+                const total = dashboard.totals[cat];
+                // build fromDate/toDate for link
+                const toDate = dashboard.labels[dashboard.labels.length - 1];
+                const fromDate = dashboard.labels[0];
+                const statusParam = encodeURIComponent(cat);
+                const href = `/report?fromDate=${fromDate}&toDate=${toDate}&status=${statusParam}`;
+            %>
+                <div class="card">
+                    <div class="card-title"><a href="<%= href %>"><%= cat %></a></div>
+                    <div class="card-value"><a href="<%= href %>"><%= total %></a></div>
+                </div>
+            <% }); %>
+        </div>
+
+        <div class="chart-wrapper">
+            <div class="chart-container">
+                <canvas id="dashboardChart"></canvas>
+            </div>
+        </div>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script>
+            const labels = <%- JSON.stringify(dashboard.labels) %>;
+            const datasets = <%- JSON.stringify(dashboard.datasets) %>.map((ds, idx) => ({ label: ds.label, data: ds.data, backgroundColor: ['#4e79a7','#f28e2b','#e15759','#76b7b2','#59a14f','#edc949','#b07aa1'][idx % 7] }));
+            const canvas = document.getElementById('dashboardChart');
+            // Resize canvas to fill container
+            const container = canvas.parentElement;
+            function resizeCanvas() {
+                canvas.width = container.clientWidth;
+                canvas.height = container.clientHeight;
+            }
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+
+            const ctx = canvas.getContext('2d');
+            const chart = new Chart(ctx, {
+                type: 'bar',
+                data: { labels, datasets },
+                options: { responsive: true, maintainAspectRatio: false, scales: { x: { stacked: true }, y: { stacked: true } } }
+            });
+
+            // make chart segments clickable: navigate to report for that category
+            canvas.addEventListener('click', function(evt) {
+                const points = chart.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
+                if (points.length) {
+                    const firstPoint = points[0];
+                    const datasetIndex = firstPoint.datasetIndex;
+                    const label = chart.data.datasets[datasetIndex].label;
+                    const fromDate = labels[0];
+                    const toDate = labels[labels.length-1];
+                    const status = encodeURIComponent(label);
+                    window.location = `/report?fromDate=${fromDate}&toDate=${toDate}&status=${status}`;
+                }
+            });
+        </script>
     <% } else { %>
         <div class="nav">
             <a href="/login">Login</a>
