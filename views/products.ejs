@@ -15,7 +15,7 @@
         var yyyy = d.getFullYear();
         return mm + '-' + dd + '-' + yyyy;
     } %>
-    <a href="/" class="header-link">Home</a>
+    <%- include('partials/_nav') %>
     <h2>Products</h2>
     <ul>
         <% products.forEach(function(product, idx) { %>
