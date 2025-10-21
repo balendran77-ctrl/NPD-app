@@ -205,13 +205,25 @@ app.get('/', async (req, res) => {
 			labelMap[s] = {};
 		}
 
-		const categories = ['Sample request given','Sample submitted for Approval','Sample approved','Resample','Sample rejected','HOLD','Cancelled'];
+		const categories = ['Sample request given','Sample to be submitted','Sample submitted for Approval','Sample approved','Resample','Sample rejected','HOLD','Cancelled'];
 		labels.forEach(date => { categories.forEach(c => { labelMap[date][c] = 0; }); });
 		rows.forEach(r => {
 			const date = r.date;
 			const counts = r.counts || {};
 			if (!labelMap[date]) return;
 			Object.keys(counts).forEach(k => { labelMap[date][k] = counts[k]; });
+		});
+
+		// Compute 'Sample to be submitted' = totalRequests - (submitted + approved + resample + hold + cancelled)
+		labels.forEach(date => {
+			const total = labelMap[date]['Sample request given'] || 0;
+			const submitted = labelMap[date]['Sample submitted for Approval'] || 0;
+			const approved = labelMap[date]['Sample approved'] || 0;
+			const resmp = labelMap[date]['Resample'] || 0;
+			const hold = labelMap[date]['HOLD'] || 0;
+			const cancelled = labelMap[date]['Cancelled'] || 0;
+			const toBe = total - (submitted + approved + resmp + hold + cancelled);
+			labelMap[date]['Sample to be submitted'] = toBe > 0 ? toBe : 0;
 		});
 
 		const datasets = categories.map((cat, idx) => ({ label: cat, data: labels.map(d => labelMap[d][cat] || 0) }));
