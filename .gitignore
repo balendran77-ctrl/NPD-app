@@ -11,3 +11,11 @@ npm-debug.log*
 
 # Uploads
 uploads/
+
+# Optional local AI config
+.ai-config.json
+
+# Temporary editor files
+*.sublime-workspace
+*.sublime-project
+*.log

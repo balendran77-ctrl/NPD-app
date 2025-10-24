@@ -26,6 +26,7 @@
             <input type="date" id="fromDate" name="fromDate" value="<%= fromDate %>">
             <label for="toDate">To Date</label>
             <input type="date" id="toDate" name="toDate" value="<%= toDate %>">
+            <input type="hidden" name="dateField" value="<%= typeof dateField !== 'undefined' ? dateField : '' %>">
             <label for="status">Current Status</label>
             <select id="status" name="status">
                 <option value="">All</option>
@@ -33,6 +34,8 @@
                 <option value="Sample submitted for Approval" <%= status==="Sample submitted for Approval"?"selected":"" %>>Sample submitted for Approval</option>
                 <option value="Sample approved" <%= status==="Sample approved"?"selected":"" %>>Sample approved</option>
                 <option value="Sample rejected" <%= status==="Sample rejected"?"selected":"" %>>Sample rejected</option>
+                <option value="Resample" <%= status==="Resample"?"selected":"" %>>Resample</option>
+                <option value="Sample to be submitted" <%= status==="Sample to be submitted"?"selected":"" %>>Sample to be submitted</option>
                 <option value="Submit fresh sample" <%= status==="Submit fresh sample"?"selected":"" %>>Submit fresh sample</option>
                 <option value="HOLD" <%= status==="HOLD"?"selected":"" %>>HOLD</option>
                 <option value="Cancelled" <%= status==="Cancelled"?"selected":"" %>>Cancelled</option>

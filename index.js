@@ -12,6 +12,23 @@ const path = require('path');
 
 const app = express();
 
+// Mount AI settings routes (admin UI)
+try {
+	const aiRoutes = require('./routes/ai-settings');
+	app.use(aiRoutes);
+} catch (err) {
+	// non-critical if file missing in some environments
+}
+
+// Helper to get current AI model (can be used by other modules)
+function getCurrentAiModel() {
+	if (process.env.ENABLE_GPT5_MINI === 'true') return 'gpt-5-mini';
+	return process.env.AI_MODEL || 'gpt-4o';
+}
+
+// expose to app locals for views or modules
+app.locals.getCurrentAiModel = getCurrentAiModel;
+
 // Multer setup for file uploads with original filename
 const multer = require('multer');
 const storage = multer.diskStorage({
@@ -166,7 +183,8 @@ app.get('/', async (req, res) => {
 		// and separately counts specific status categories using conditional sums.
 		const pipeline = [
 			{ $match: { createdAt: { $gte: start, $lte: end } } },
-			{ $project: { createdAtDate: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } }, deliveredDate: 1, approvalStatus: 1 } },
+			// include requiredDate so we can determine on-time deliveries
+			{ $project: { createdAtDate: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } }, deliveredDate: 1, approvalStatus: 1, requiredDate: 1 } },
 			{ $group: {
 				_id: '$createdAtDate',
 				totalRequests: { $sum: 1 },
@@ -175,7 +193,9 @@ app.get('/', async (req, res) => {
 				resample: { $sum: { $cond: [ { $eq: ["$approvalStatus", 'Resample'] }, 1, 0 ] } },
 				rejected: { $sum: { $cond: [ { $eq: ["$approvalStatus", 'Rejected'] }, 1, 0 ] } },
 				hold: { $sum: { $cond: [ { $regexMatch: { input: "$approvalStatus", regex: "hold", options: "i" } }, 1, 0 ] } },
-				cancelled: { $sum: { $cond: [ { $regexMatch: { input: "$approvalStatus", regex: "^cancel", options: "i" } }, 1, 0 ] } }
+				cancelled: { $sum: { $cond: [ { $regexMatch: { input: "$approvalStatus", regex: "^cancel", options: "i" } }, 1, 0 ] } },
+				// on-time: deliveredDate present AND requiredDate present AND deliveredDate <= requiredDate
+				ontime: { $sum: { $cond: [ { $and: [ { $ne: ["$deliveredDate", null] }, { $ne: ["$deliveredDate", ""] }, { $ne: ["$requiredDate", null] }, { $ne: ["$requiredDate", ""] }, { $lte: ["$deliveredDate", "$requiredDate"] } ] }, 1, 0 ] } }
 			} },
 			{ $project: {
 				date: '$_id',
@@ -186,7 +206,8 @@ app.get('/', async (req, res) => {
 					'Resample': '$resample',
 					'Sample rejected': '$rejected',
 					'HOLD': '$hold',
-					'Cancelled': '$cancelled'
+					'Cancelled': '$cancelled',
+					'Ontime': '$ontime'
 				},
 				_id: 0
 			} },
@@ -226,10 +247,16 @@ app.get('/', async (req, res) => {
 			labelMap[date]['Sample to be submitted'] = toBe > 0 ? toBe : 0;
 		});
 
-		const datasets = categories.map((cat, idx) => ({ label: cat, data: labels.map(d => labelMap[d][cat] || 0) }));
-		const totals = {};
-		categories.forEach((cat, idx) => { totals[cat] = datasets[idx].data.reduce((a,b) => a+b, 0); });
-		const dashboard = { labels, datasets, totals };
+	const datasets = categories.map((cat, idx) => ({ label: cat, data: labels.map(d => labelMap[d][cat] || 0) }));
+	const totals = {};
+	categories.forEach((cat, idx) => { totals[cat] = datasets[idx].data.reduce((a,b) => a+b, 0); });
+	// Compute on-time totals and percentage for the selected period
+	const onTimeTotal = labels.reduce((sum, d) => sum + (labelMap[d]['Ontime'] || 0), 0);
+	const totalRequestsSum = totals['Sample request given'] || 0;
+	const ontimePercent = totalRequestsSum > 0 ? Math.round((onTimeTotal / totalRequestsSum) * 10000) / 100 : 0; // 2 decimals
+	totals['Ontime %'] = ontimePercent;
+
+	const dashboard = { labels, datasets, totals };
 
 		dashboardCache.set(cacheKey, { ts: Date.now(), data: dashboard });
 		res.render('index', { user: req.session.user, dashboard, range });
@@ -303,45 +330,52 @@ app.get('/logout', (req, res) => {
 // Report page
 app.get('/report', async (req, res) => {
 	if (!req.session.user) return res.redirect('/login');
-	const { fromDate = '', toDate = '', status = '' } = req.query;
+	const { fromDate = '', toDate = '', status = '', dateField = '' } = req.query;
 	let filter = {};
 
-	// Filter by status
-       if (status) {
-	       if (status === 'Sample request given') {
-		       filter.deliveredDate = { $in: [null, ''] };
-	       } else if (status === 'Sample submitted for Approval') {
-		       filter.deliveredDate = { $ne: null };
-		       filter.approvalStatus = { $in: [null, '', undefined] };
-	       } else if (status === 'Sample approved') {
-		       filter.approvalStatus = 'Approved';
-	       } else if (status === 'Sample rejected') {
-		       filter.approvalStatus = 'Rejected';
-	       } else if (status === 'Submit fresh sample') {
-		       filter.approvalStatus = 'Resample';
-	       } else if (status === 'Waiting for approval') {
-		       filter.deliveredDate = { $ne: null };
-		       filter.approvalStatus = { $in: [null, '', undefined] };
-	       } else if (status === 'HOLD') {
-		       // Match common HOLD variants case-insensitively
-		       filter.approvalStatus = { $regex: '^HOLD', $options: 'i' };
-	       } else if (status === 'Cancelled') {
-		       // Match both 'Cancelled' and American spelling 'Canceled' (case-insensitive)
-		       filter.approvalStatus = { $regex: '^cancel', $options: 'i' };
-	       } else if (status === 'HOLD by customer') {
-		       filter.approvalStatus = 'HOLD by customer';
-	       } else if (status === 'Hold by Marketing team') {
-		       filter.approvalStatus = 'Hold by Marketing team';
-	       }
-       }
-
-	// Filter by date range
+	// When dateField=createdAt is provided (dashboard links), apply createdAt filter.
 	if (fromDate && toDate) {
-		filter.requiredDate = { $gte: fromDate, $lte: toDate };
+		if (dateField === 'createdAt') {
+			const from = new Date(fromDate);
+			const to = new Date(toDate);
+			to.setHours(23,59,59,999);
+			filter.createdAt = { $gte: from, $lte: to };
+		} else {
+			// Default behavior: filter by requiredDate (existing behaviour)
+			filter.requiredDate = { $gte: fromDate, $lte: toDate };
+		}
+	}
+
+	// Filter by status
+	if (status) {
+		if (status === 'Sample request given') {
+			// dashboard 'Sample request given' is total requests for the period -> no extra filter
+		} else if (status === 'Sample to be submitted') {
+			// Not yet submitted: deliveredDate empty and no approval status
+			filter.deliveredDate = { $in: [null, ''] };
+			filter.approvalStatus = { $in: [null, '', undefined] };
+		} else if (status === 'Sample submitted for Approval') {
+			filter.deliveredDate = { $ne: null };
+			filter.approvalStatus = { $in: [null, '', undefined] };
+		} else if (status === 'Sample approved') {
+			filter.approvalStatus = 'Approved';
+		} else if (status === 'Sample rejected') {
+			filter.approvalStatus = 'Rejected';
+		} else if (status === 'Resample') {
+			filter.approvalStatus = 'Resample';
+		} else if (status === 'HOLD') {
+			filter.approvalStatus = { $regex: '^HOLD', $options: 'i' };
+		} else if (status === 'Cancelled') {
+			filter.approvalStatus = { $regex: '^cancel', $options: 'i' };
+		} else if (status === 'HOLD by customer') {
+			filter.approvalStatus = 'HOLD by customer';
+		} else if (status === 'Hold by Marketing team') {
+			filter.approvalStatus = 'Hold by Marketing team';
+		}
 	}
 
 	const products = await Product.find(filter).lean();
-	res.render('report', { products, fromDate, toDate, status });
+	res.render('report', { products, fromDate, toDate, status, dateField });
 });
 
 // Product Schema
@@ -601,13 +635,28 @@ app.post('/update-product/:id', async (req, res) => {
 const XLSX = require('xlsx');
 app.get('/download-report', async (req, res) => {
 	if (!req.session.user) return res.redirect('/login');
-	const { fromDate = '', toDate = '', status = '' } = req.query;
+	const { fromDate = '', toDate = '', status = '', dateField = '' } = req.query;
 	let filter = {};
+
+	// When dateField=createdAt is provided (dashboard links), apply createdAt filter.
+	if (fromDate && toDate) {
+		if (dateField === 'createdAt') {
+			const from = new Date(fromDate);
+			const to = new Date(toDate);
+			to.setHours(23,59,59,999);
+			filter.createdAt = { $gte: from, $lte: to };
+		} else {
+			filter.requiredDate = { $gte: fromDate, $lte: toDate };
+		}
+	}
 
 	// Filter by status
 	if (status) {
 		if (status === 'Sample request given') {
+			// total requests -> no extra filter
+		} else if (status === 'Sample to be submitted') {
 			filter.deliveredDate = { $in: [null, ''] };
+			filter.approvalStatus = { $in: [null, '', undefined] };
 		} else if (status === 'Sample submitted for Approval') {
 			filter.deliveredDate = { $ne: null };
 			filter.approvalStatus = { $in: [null, '', undefined] };
@@ -615,22 +664,13 @@ app.get('/download-report', async (req, res) => {
 			filter.approvalStatus = 'Approved';
 		} else if (status === 'Sample rejected') {
 			filter.approvalStatus = 'Rejected';
-		} else if (status === 'Submit fresh sample') {
+		} else if (status === 'Resample' || status === 'Submit fresh sample') {
 			filter.approvalStatus = 'Resample';
-		       } else if (status === 'HOLD') {
-			       filter.approvalStatus = 'HOLD';
-		       } else if (status === 'Cancelled') {
-			       filter.approvalStatus = 'Cancelled';
 		} else if (status === 'HOLD') {
-			filter.approvalStatus = 'HOLD';
+			filter.approvalStatus = { $regex: '^HOLD', $options: 'i' };
 		} else if (status === 'Cancelled') {
-			filter.approvalStatus = 'Cancelled';
+			filter.approvalStatus = { $regex: '^cancel', $options: 'i' };
 		}
-	}
-
-	// Filter by date range
-	if (fromDate && toDate) {
-		filter.requiredDate = { $gte: fromDate, $lte: toDate };
 	}
 
 	const products = await Product.find(filter).lean();

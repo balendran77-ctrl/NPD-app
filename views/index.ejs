@@ -29,11 +29,23 @@
                 const toDate = dashboard.labels[dashboard.labels.length - 1];
                 const fromDate = dashboard.labels[0];
                 const statusParam = encodeURIComponent(cat);
-                const href = `/report?fromDate=${fromDate}&toDate=${toDate}&status=${statusParam}`;
+                const href = `/report?fromDate=${fromDate}&toDate=${toDate}&status=${statusParam}&dateField=createdAt`;
             %>
                 <div class="card">
-                    <div class="card-title"><a href="<%= href %>"><%= cat %></a></div>
-                    <div class="card-value"><a href="<%= href %>"><%= total %></a></div>
+                    <div class="card-title">
+                        <% if (cat === 'Ontime %') { %>
+                            <%= cat %>
+                        <% } else { %>
+                            <a href="<%= href %>"><%= cat %></a>
+                        <% } %>
+                    </div>
+                    <div class="card-value">
+                        <% if (cat === 'Ontime %') { %>
+                            <%= total %>%
+                        <% } else { %>
+                            <a href="<%= href %>"><%= total %></a>
+                        <% } %>
+                    </div>
                 </div>
             <% }); %>
         </div>
@@ -65,7 +77,7 @@
             });
 
             // make chart segments clickable: navigate to report for that category
-            canvas.addEventListener('click', function(evt) {
+                    canvas.addEventListener('click', function(evt) {
                 const points = chart.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
                 if (points.length) {
                     const firstPoint = points[0];
@@ -73,8 +85,8 @@
                     const label = chart.data.datasets[datasetIndex].label;
                     const fromDate = labels[0];
                     const toDate = labels[labels.length-1];
-                    const status = encodeURIComponent(label);
-                    window.location = `/report?fromDate=${fromDate}&toDate=${toDate}&status=${status}`;
+                            const status = encodeURIComponent(label);
+                            window.location = `/report?fromDate=${fromDate}&toDate=${toDate}&status=${status}&dateField=createdAt`;
                 }
             });
         </script>

@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>AI Settings</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div class="container card">
+    <h2>AI Settings</h2>
+    <% if (typeof message !== 'undefined') { %>
+      <p class="small-muted"><%= message %></p>
+    <% } %>
+    <form method="post" action="/admin/ai-settings" class="form-card">
+      <label>Model</label>
+      <input type="text" name="model" value="<%= current %>" placeholder="gpt-5-mini" />
+      <p class="small-muted">Changing here updates the running process only. Update your deployment env (Render, etc.) for persistence.</p>
+      <div style="margin-top:8px;">
+        <label><input type="checkbox" name="enable_gpt5" value="1" <%= (process.env.ENABLE_GPT5_MINI === 'true' || current === 'gpt-5-mini' ? 'checked' : '') %> /> Enable GPT-5-mini for all clients (runtime)</label>
+      </div>
+      <button type="submit">Update</button>
+    </form>
+    <div class="ai-note">Current runtime model: <%= (process.env.ENABLE_GPT5_MINI === 'true' ? 'gpt-5-mini (forced)' : (current || 'gpt-4o')) %></div>
+  </div>
+</body>
+</html>
