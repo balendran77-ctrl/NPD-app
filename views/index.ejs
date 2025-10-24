@@ -28,19 +28,19 @@
                 // build fromDate/toDate for link
                 const toDate = dashboard.labels[dashboard.labels.length - 1];
                 const fromDate = dashboard.labels[0];
-                const statusParam = encodeURIComponent(cat);
+                // For percent cards like 'Ontime %' and 'Delayed %' send plain status names
+                let linkStatus = cat;
+                if (cat === 'Ontime %') linkStatus = 'Ontime';
+                if (cat === 'Delayed %') linkStatus = 'Delayed';
+                const statusParam = encodeURIComponent(linkStatus);
                 const href = `/report?fromDate=${fromDate}&toDate=${toDate}&status=${statusParam}&dateField=createdAt`;
             %>
                 <div class="card">
                     <div class="card-title">
-                        <% if (cat === 'Ontime %') { %>
-                            <%= cat %>
-                        <% } else { %>
-                            <a href="<%= href %>"><%= cat %></a>
-                        <% } %>
+                        <a href="<%= href %>"><%= cat %></a>
                     </div>
                     <div class="card-value">
-                        <% if (cat === 'Ontime %') { %>
+                        <% if (cat === 'Ontime %' || cat === 'Delayed %') { %>
                             <%= total %>%
                         <% } else { %>
                             <a href="<%= href %>"><%= total %></a>

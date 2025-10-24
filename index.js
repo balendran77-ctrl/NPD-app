@@ -195,7 +195,8 @@ app.get('/', async (req, res) => {
 				hold: { $sum: { $cond: [ { $regexMatch: { input: "$approvalStatus", regex: "hold", options: "i" } }, 1, 0 ] } },
 				cancelled: { $sum: { $cond: [ { $regexMatch: { input: "$approvalStatus", regex: "^cancel", options: "i" } }, 1, 0 ] } },
 				// on-time: deliveredDate present AND requiredDate present AND deliveredDate <= requiredDate
-				ontime: { $sum: { $cond: [ { $and: [ { $ne: ["$deliveredDate", null] }, { $ne: ["$deliveredDate", ""] }, { $ne: ["$requiredDate", null] }, { $ne: ["$requiredDate", ""] }, { $lte: ["$deliveredDate", "$requiredDate"] } ] }, 1, 0 ] } }
+				ontime: { $sum: { $cond: [ { $and: [ { $ne: ["$deliveredDate", null] }, { $ne: ["$deliveredDate", ""] }, { $ne: ["$requiredDate", null] }, { $ne: ["$requiredDate", ""] }, { $lte: ["$deliveredDate", "$requiredDate"] } ] }, 1, 0 ] } },
+				delayed: { $sum: { $cond: [ { $and: [ { $ne: ["$deliveredDate", null] }, { $ne: ["$deliveredDate", ""] }, { $ne: ["$requiredDate", null] }, { $ne: ["$requiredDate", ""] }, { $gt: ["$deliveredDate", "$requiredDate"] } ] }, 1, 0 ] } }
 			} },
 			{ $project: {
 				date: '$_id',
@@ -207,7 +208,8 @@ app.get('/', async (req, res) => {
 					'Sample rejected': '$rejected',
 					'HOLD': '$hold',
 					'Cancelled': '$cancelled',
-					'Ontime': '$ontime'
+					'Ontime': '$ontime',
+					'Delayed': '$delayed'
 				},
 				_id: 0
 			} },
@@ -250,11 +252,14 @@ app.get('/', async (req, res) => {
 	const datasets = categories.map((cat, idx) => ({ label: cat, data: labels.map(d => labelMap[d][cat] || 0) }));
 	const totals = {};
 	categories.forEach((cat, idx) => { totals[cat] = datasets[idx].data.reduce((a,b) => a+b, 0); });
-	// Compute on-time totals and percentage for the selected period
+	// Compute on-time and delayed totals and percentages for the selected period
 	const onTimeTotal = labels.reduce((sum, d) => sum + (labelMap[d]['Ontime'] || 0), 0);
+	const delayedTotal = labels.reduce((sum, d) => sum + (labelMap[d]['Delayed'] || 0), 0);
 	const totalRequestsSum = totals['Sample request given'] || 0;
 	const ontimePercent = totalRequestsSum > 0 ? Math.round((onTimeTotal / totalRequestsSum) * 10000) / 100 : 0; // 2 decimals
+	const delayedPercent = totalRequestsSum > 0 ? Math.round((delayedTotal / totalRequestsSum) * 10000) / 100 : 0; // 2 decimals
 	totals['Ontime %'] = ontimePercent;
+	totals['Delayed %'] = delayedPercent;
 
 	const dashboard = { labels, datasets, totals };
 
@@ -363,6 +368,12 @@ app.get('/report', async (req, res) => {
 			filter.approvalStatus = 'Rejected';
 		} else if (status === 'Resample') {
 			filter.approvalStatus = 'Resample';
+		} else if (status === 'Ontime') {
+			// deliveredDate and requiredDate present and deliveredDate <= requiredDate
+			filter.$expr = { $and: [ { $ne: ["$deliveredDate", null] }, { $ne: ["$deliveredDate", ""] }, { $ne: ["$requiredDate", null] }, { $ne: ["$requiredDate", ""] }, { $lte: ["$deliveredDate", "$requiredDate"] } ] };
+		} else if (status === 'Delayed') {
+			// deliveredDate and requiredDate present and deliveredDate > requiredDate
+			filter.$expr = { $and: [ { $ne: ["$deliveredDate", null] }, { $ne: ["$deliveredDate", ""] }, { $ne: ["$requiredDate", null] }, { $ne: ["$requiredDate", ""] }, { $gt: ["$deliveredDate", "$requiredDate"] } ] };
 		} else if (status === 'HOLD') {
 			filter.approvalStatus = { $regex: '^HOLD', $options: 'i' };
 		} else if (status === 'Cancelled') {
@@ -666,6 +677,10 @@ app.get('/download-report', async (req, res) => {
 			filter.approvalStatus = 'Rejected';
 		} else if (status === 'Resample' || status === 'Submit fresh sample') {
 			filter.approvalStatus = 'Resample';
+		} else if (status === 'Ontime') {
+			filter.$expr = { $and: [ { $ne: ["$deliveredDate", null] }, { $ne: ["$deliveredDate", ""] }, { $ne: ["$requiredDate", null] }, { $ne: ["$requiredDate", ""] }, { $lte: ["$deliveredDate", "$requiredDate"] } ] };
+		} else if (status === 'Delayed') {
+			filter.$expr = { $and: [ { $ne: ["$deliveredDate", null] }, { $ne: ["$deliveredDate", ""] }, { $ne: ["$requiredDate", null] }, { $ne: ["$requiredDate", ""] }, { $gt: ["$deliveredDate", "$requiredDate"] } ] };
 		} else if (status === 'HOLD') {
 			filter.approvalStatus = { $regex: '^HOLD', $options: 'i' };
 		} else if (status === 'Cancelled') {
