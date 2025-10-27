@@ -12,13 +12,7 @@ const path = require('path');
 
 const app = express();
 
-// Mount AI settings routes (admin UI)
-try {
-	const aiRoutes = require('./routes/ai-settings');
-	app.use(aiRoutes);
-} catch (err) {
-	// non-critical if file missing in some environments
-}
+// NOTE: AI settings routes are mounted later after session middleware so req.session is available.
 
 // Helper to get current AI model (can be used by other modules)
 function getCurrentAiModel() {
@@ -131,6 +125,13 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(session(sessionOptions));
 console.log('Session store:', MongoStore ? 'connect-mongo (MongoDB)' : 'MemoryStore (in-memory)');
 console.log('NODE_ENV=', process.env.NODE_ENV || 'development');
+// Mount AI settings routes (admin UI) after session middleware so req.session is available
+try {
+	const aiRoutes = require('./routes/ai-settings');
+	app.use(aiRoutes);
+} catch (err) {
+	// non-critical if file missing in some environments
+}
 // Serve static assets (CSS, client JS, images)
 app.use(express.static(path.join(__dirname, 'public')));
 // Make the logged-in user available in all views via res.locals
