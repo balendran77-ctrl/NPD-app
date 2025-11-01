@@ -638,7 +638,8 @@ app.post('/update-product/:id', async (req, res) => {
 	} else {
 		await Product.findByIdAndUpdate(req.params.id, update);
 	}
-	res.redirect('/products');
+	// After updating delivery/approval info, remain on the update page for the same product
+	res.redirect('/update-product/' + req.params.id);
 });
 
 // Start server
@@ -738,6 +739,125 @@ app.get('/download-report', async (req, res) => {
 	res.setHeader('Content-Disposition', 'attachment; filename="report.xlsx"');
 	res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
 	res.send(buf);
+	});
+	// Performance report (same filters as /report) but exported XLSX excludes specification details
+	app.get('/performance-report', async (req, res) => {
+		// reuse same filtering logic as /report
+		if (!req.session.user) return res.redirect('/login');
+		const { fromDate = '', toDate = '', status = '', dateField = '' } = req.query;
+		let filter = {};
+		if (fromDate && toDate) {
+			if (dateField === 'createdAt') {
+				const from = new Date(fromDate);
+				const to = new Date(toDate);
+				to.setHours(23,59,59,999);
+				filter.createdAt = { $gte: from, $lte: to };
+			} else {
+				filter.requiredDate = { $gte: fromDate, $lte: toDate };
+			}
+		}
+		// status mapping (same as /report)
+		if (status) {
+			if (status === 'Sample request given') {
+				// no extra filter
+			} else if (status === 'Sample to be submitted') {
+				filter.deliveredDate = { $in: [null, ''] };
+				filter.approvalStatus = { $in: [null, '', undefined] };
+			} else if (status === 'Sample submitted for Approval') {
+				filter.deliveredDate = { $ne: null };
+				filter.approvalStatus = { $in: [null, '', undefined] };
+			} else if (status === 'Sample approved') {
+				filter.approvalStatus = 'Approved';
+			} else if (status === 'Sample rejected') {
+				filter.approvalStatus = 'Rejected';
+			} else if (status === 'Resample') {
+				filter.approvalStatus = 'Resample';
+			} else if (status === 'Ontime') {
+				filter.$expr = { $and: [ { $ne: ["$deliveredDate", null] }, { $ne: ["$deliveredDate", ""] }, { $ne: ["$requiredDate", null] }, { $ne: ["$requiredDate", ""] }, { $lte: ["$deliveredDate", "$requiredDate"] } ] };
+			} else if (status === 'Delayed') {
+				filter.$expr = { $and: [ { $ne: ["$deliveredDate", null] }, { $ne: ["$deliveredDate", ""] }, { $ne: ["$requiredDate", null] }, { $ne: ["$requiredDate", ""] }, { $gt: ["$deliveredDate", "$requiredDate"] } ] };
+			} else if (status === 'HOLD') {
+				filter.approvalStatus = { $regex: '^HOLD', $options: 'i' };
+			} else if (status === 'Cancelled') {
+				filter.approvalStatus = { $regex: '^cancel', $options: 'i' };
+			}
+		}
+		const products = await Product.find(filter).lean();
+		res.render('performance-report', { products, fromDate, toDate, status, dateField });
+	});
+
+	app.get('/download-performance-report', async (req, res) => {
+		if (!req.session.user) return res.redirect('/login');
+		const { fromDate = '', toDate = '', status = '', dateField = '' } = req.query;
+		let filter = {};
+		if (fromDate && toDate) {
+			if (dateField === 'createdAt') {
+				const from = new Date(fromDate);
+				const to = new Date(toDate);
+				to.setHours(23,59,59,999);
+				filter.createdAt = { $gte: from, $lte: to };
+			} else {
+				filter.requiredDate = { $gte: fromDate, $lte: toDate };
+			}
+		}
+		// same status mapping as above
+		if (status) {
+			if (status === 'Sample request given') {
+			} else if (status === 'Sample to be submitted') {
+				filter.deliveredDate = { $in: [null, ''] };
+				filter.approvalStatus = { $in: [null, '', undefined] };
+			} else if (status === 'Sample submitted for Approval') {
+				filter.deliveredDate = { $ne: null };
+				filter.approvalStatus = { $in: [null, '', undefined] };
+			} else if (status === 'Sample approved') {
+				filter.approvalStatus = 'Approved';
+			} else if (status === 'Sample rejected') {
+				filter.approvalStatus = 'Rejected';
+			} else if (status === 'Resample' || status === 'Submit fresh sample') {
+				filter.approvalStatus = 'Resample';
+			} else if (status === 'Ontime') {
+				filter.$expr = { $and: [ { $ne: ["$deliveredDate", null] }, { $ne: ["$deliveredDate", ""] }, { $ne: ["$requiredDate", null] }, { $ne: ["$requiredDate", ""] }, { $lte: ["$deliveredDate", "$requiredDate"] } ] };
+			} else if (status === 'Delayed') {
+				filter.$expr = { $and: [ { $ne: ["$deliveredDate", null] }, { $ne: ["$deliveredDate", ""] }, { $ne: ["$requiredDate", null] }, { $ne: ["$requiredDate", ""] }, { $gt: ["$deliveredDate", "$requiredDate"] } ] };
+			} else if (status === 'HOLD') {
+				filter.approvalStatus = { $regex: '^HOLD', $options: 'i' };
+			} else if (status === 'Cancelled') {
+				filter.approvalStatus = { $regex: '^cancel', $options: 'i' };
+			}
+		}
+		const products = await Product.find(filter).lean();
+
+		// Prepare data for XLSX - exclude specification details
+		const data = products.map((p, idx) => ({
+			'Sl. No': idx + 1,
+			'Person Name': p.personName,
+			'Request Date': p.createdAt ? (new Date(p.createdAt)).toISOString().slice(0,10) : '',
+			'Customer Name': p.customerName,
+			'Product Name': p.productName,
+			'No. of Samples': p.noOfSamples,
+			'Required Date': p.requiredDate,
+			'Delivery Address': p.deliveryAddress,
+			'Customer Contact': p.customerContact,
+			'Contact No': p.contactNo,
+			'Created By': p.createdBy,
+			'Delivered Date': p.deliveredDate,
+			'DC Details': p.dcDetails,
+			'Courier Details': p.courierDetails,
+			'Approved Date': p.approvedDate,
+			'Approval Status': p.approvalStatus,
+			'Rejection Reason': p.rejectionReason,
+			'Drawing Path': p.drawingPath,
+			'Status Updates': Array.isArray(p.statusUpdates) ? p.statusUpdates.map(su => `${su.date}: ${su.status} - ${su.details}`).join('; ') : ''
+		}));
+
+		const ws2 = XLSX.utils.json_to_sheet(data);
+		const wb2 = XLSX.utils.book_new();
+		XLSX.utils.book_append_sheet(wb2, ws2, 'Performance Report');
+		const buf2 = XLSX.write(wb2, { type: 'buffer', bookType: 'xlsx' });
+
+		res.setHeader('Content-Disposition', 'attachment; filename="performance-report.xlsx"');
+		res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+		res.send(buf2);
 	});
 // Admin user management routes
 app.get('/admin/users', async (req, res) => {

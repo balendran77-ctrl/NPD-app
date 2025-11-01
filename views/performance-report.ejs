@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Product Status Report</title>
+    <title>Performance Report</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
     body { font-family: Arial, sans-serif; background: #f9f9f9; margin: 0; padding: 0; }
@@ -20,8 +20,8 @@
 <body>
     <%- include('partials/_nav') %>
     <div class="container">
-        <h2>Product Status Report</h2>
-    <form method="get" action="/report" id="reportForm">
+        <h2>Performance Report</h2>
+    <form method="get" action="/performance-report" id="perfReportForm">
             <label for="fromDate">From Date</label>
             <input type="date" id="fromDate" name="fromDate" value="<%= fromDate %>">
             <label for="toDate">To Date</label>
@@ -47,9 +47,9 @@
         </form>
         <script>
         function downloadXLSX() {
-            var form = document.getElementById('reportForm');
+            var form = document.getElementById('perfReportForm');
             var params = new URLSearchParams(new FormData(form)).toString();
-            window.location.href = '/download-report?' + params;
+            window.location.href = '/download-performance-report?' + params;
         }
         </script>
         <table>
@@ -87,3 +87,6 @@
             <% }); %>
     </table>
     <a href="/">Back</a>
+    </div>
+</body>
+</html>
