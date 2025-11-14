@@ -638,8 +638,8 @@ app.post('/update-product/:id', async (req, res) => {
 	} else {
 		await Product.findByIdAndUpdate(req.params.id, update);
 	}
-	// After updating delivery/approval info, remain on the update page for the same product
-	res.redirect('/update-product/' + req.params.id);
+	// After updating delivery/approval info, return to the main quick-update list (where user can search/browse)
+	res.redirect('/quick-update');
 });
 
 // Start server
