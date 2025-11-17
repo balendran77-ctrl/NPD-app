@@ -859,6 +859,28 @@ app.get('/download-report', async (req, res) => {
 		res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
 		res.send(buf2);
 	});
+
+// Daily Updates Report - shows all product updates on a specific date
+app.get('/daily-updates', async (req, res) => {
+	if (!req.session.user) return res.redirect('/login');
+	const { date = '' } = req.query;
+	let products = [];
+	
+	if (date) {
+		// Find products updated on the selected date
+		const startOfDay = new Date(date);
+		startOfDay.setHours(0, 0, 0, 0);
+		const endOfDay = new Date(date);
+		endOfDay.setHours(23, 59, 59, 999);
+		
+		products = await Product.find({
+			updatedAt: { $gte: startOfDay, $lte: endOfDay }
+		}).sort({ updatedAt: -1 }).lean();
+	}
+	
+	res.render('daily-updates', { products, selectedDate: date });
+});
+
 // Admin user management routes
 app.get('/admin/users', async (req, res) => {
 	if (!req.session.user) {

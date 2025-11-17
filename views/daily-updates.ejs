@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Daily Updates Report</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+    body { font-family: Arial, sans-serif; background: #f9f9f9; margin: 0; padding: 0; }
+    .container { max-width: 900px; margin: 30px auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.07); }
+    h2 { text-align: center; }
+    form { margin-bottom: 20px; }
+    label { display: block; margin-top: 10px; }
+    input, select { width: 100%; padding: 8px; margin-top: 5px; border-radius: 4px; border: 1px solid #ccc; }
+    button { margin-top: 20px; width: 100%; padding: 10px; background: #007bff; color: #fff; border: none; border-radius: 4px; font-size: 1rem; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    th { background: #f0f0f0; }
+    .update-time { font-size: 0.9em; color: #666; }
+    .no-updates { text-align: center; padding: 20px; color: #666; }
+    @media (max-width: 600px) { .container { margin: 10px; padding: 10px; } table, th, td { font-size: 0.95rem; } }
+    </style>
+</head>
+<body>
+    <%- include('partials/_nav') %>
+    <div class="container">
+        <h2>Daily Updates Report</h2>
+        <form method="get" action="/daily-updates">
+            <label for="date">Select Date</label>
+            <input type="date" id="date" name="date" value="<%= selectedDate %>" required>
+            <button type="submit">Show Updates</button>
+        </form>
+        
+        <% if (selectedDate) { %>
+            <h3>Updates on <%= new Date(selectedDate).toLocaleDateString() %></h3>
+            
+            <% if (products.length > 0) { %>
+                <table>
+                    <tr>
+                        <th>Sl. No</th>
+                        <th>Product Name</th>
+                        <th>Customer Name</th>
+                        <th>Updated By</th>
+                        <th>Update Time</th>
+                        <th>Current Status</th>
+                        <th>Actions</th>
+                    </tr>
+                    <% products.forEach(function(product, idx) { %>
+                        <tr>
+                            <td><%= idx + 1 %></td>
+                            <td><%= product.productName %></td>
+                            <td><%= product.customerName %></td>
+                            <td><%= product.createdBy || 'Unknown' %></td>
+                            <td class="update-time">
+                                <%= product.updatedAt ? new Date(product.updatedAt).toLocaleString() : '' %>
+                            </td>
+                            <td>
+                                <% if (!product.deliveredDate) { %>
+                                    Sample request given
+                                <% } else if (product.deliveredDate && !product.approvalStatus) { %>
+                                    Sample submitted for Approval
+                                <% } else if (product.approvalStatus === 'Approved') { %>
+                                    Sample approved
+                                <% } else if (product.approvalStatus === 'Rejected') { %>
+                                    Sample rejected
+                                <% } else if (product.approvalStatus === 'Resample') { %>
+                                    Submit fresh sample
+                                <% } else if (product.approvalStatus && product.approvalStatus.toLowerCase().includes('hold')) { %>
+                                    <%= product.approvalStatus %>
+                                <% } else if (product.approvalStatus && product.approvalStatus.toLowerCase().includes('cancel')) { %>
+                                    <%= product.approvalStatus %>
+                                <% } else { %>
+                                    <%= product.approvalStatus || 'No status' %>
+                                <% } %>
+                            </td>
+                            <td>
+                                <a href="/update-product/<%= product._id %>">Update</a>
+                            </td>
+                        </tr>
+                    <% }); %>
+                </table>
+            <% } else { %>
+                <div class="no-updates">
+                    No updates found for <%= new Date(selectedDate).toLocaleDateString() %>
+                </div>
+            <% } %>
+        <% } else { %>
+            <div class="no-updates">
+                Please select a date to view updates
+            </div>
+        <% } %>
+        
+        <a href="/">Back to Home</a>
+    </div>
+</body>
+</html>
