@@ -61,6 +61,12 @@
     .action-btn { padding: 6px 12px; background: #28a745; color: white; text-decoration: none; border-radius: 4px; font-size: 14px; margin-right: 10px; }
     .action-btn:hover { background: #218838; }
     
+    /* Artwork Preview */
+    .artwork-preview { margin-top: 10px; text-align: center; }
+    .artwork-preview img { max-width: 200px; max-height: 150px; border: 1px solid #ddd; border-radius: 4px; cursor: pointer; transition: transform 0.2s; }
+    .artwork-preview img:hover { transform: scale(1.05); }
+    .file-not-found { padding: 20px; text-align: center; border: 1px solid #ddd; border-radius: 4px; color: #666; background: #f8f9fa; }
+    
     /* Responsive */
     @media (max-width: 768px) {
         .container { margin: 10px; padding: 15px; }
@@ -96,11 +102,14 @@
         <!-- Results -->
         <% if (q && products.length > 0) { %>
             <div class="product-grid">
-                <% products.forEach(function(product) { %>
+                <% products.forEach(function(product, index) { %>
                     <div class="product-card">
                         <!-- Product Header -->
                         <div class="product-header">
-                            <div class="product-name"><%= product.productName %></div>
+                            <div class="product-name">
+                                <span style="color: #666; font-size: 16px; margin-right: 10px;">SL No: <%= ((page - 1) * limit) + index + 1 %></span>
+                                <%= product.productName %>
+                            </div>
                             <div class="product-code">Product Code: <%= product.productCode || 'Not specified' %></div>
                             <div class="customer-name">Customer: <%= product.customerName %></div>
                         </div>
@@ -111,24 +120,52 @@
                             <div class="detail-section">
                                 <div class="section-title">📋 Product Specifications</div>
                                 <div class="detail-item">
-                                    <span class="detail-label">Dimensions:</span>
-                                    <span class="detail-value"><%= product.dimensions || 'Not specified' %></span>
+                                    <span class="detail-label">Length (L):</span>
+                                    <span class="detail-value"><%= (product.specifications && product.specifications.length) || 'Not specified' %></span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Width (W):</span>
+                                    <span class="detail-value"><%= (product.specifications && product.specifications.width) || 'Not specified' %></span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Height (H):</span>
+                                    <span class="detail-value"><%= (product.specifications && product.specifications.height) || 'Not specified' %></span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Ply:</span>
+                                    <span class="detail-value"><%= (product.specifications && product.specifications.ply) || 'Not specified' %></span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">UOM:</span>
+                                    <span class="detail-value"><%= (product.specifications && product.specifications.unitOfMeasurement) || 'Not specified' %></span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Flute Type:</span>
+                                    <span class="detail-value"><%= (product.specifications && product.specifications.fluteType) || 'Not specified' %></span>
                                 </div>
                                 <div class="detail-item">
                                     <span class="detail-label">Weight:</span>
-                                    <span class="detail-value"><%= product.weight || 'Not specified' %></span>
+                                    <span class="detail-value"><%= (product.specifications && product.specifications.weight) || 'Not specified' %></span>
                                 </div>
                                 <div class="detail-item">
-                                    <span class="detail-label">Material:</span>
-                                    <span class="detail-value"><%= product.material || 'Not specified' %></span>
+                                    <span class="detail-label">Bursting Strength:</span>
+                                    <span class="detail-value"><%= (product.specifications && product.specifications.burstingStrength) || 'Not specified' %></span>
                                 </div>
                                 <div class="detail-item">
-                                    <span class="detail-label">Color:</span>
-                                    <span class="detail-value"><%= product.color || 'Not specified' %></span>
+                                    <span class="detail-label">BCT:</span>
+                                    <span class="detail-value"><%= (product.specifications && product.specifications.BCT) || 'Not specified' %></span>
                                 </div>
                                 <div class="detail-item">
-                                    <span class="detail-label">Special Notes:</span>
-                                    <span class="detail-value"><%= product.specialRequirements || 'None' %></span>
+                                    <span class="detail-label">ECT:</span>
+                                    <span class="detail-value"><%= (product.specifications && product.specifications.ECT) || 'Not specified' %></span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">FCT:</span>
+                                    <span class="detail-value"><%= (product.specifications && product.specifications.FCT) || 'Not specified' %></span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Moisture:</span>
+                                    <span class="detail-value"><%= (product.specifications && product.specifications.moisture) || 'Not specified' %></span>
                                 </div>
                             </div>
                             
@@ -191,6 +228,60 @@
                             </div>
                         </div>
                         
+                        <!-- Printing & Artwork Details -->
+                        <div class="details-grid" style="margin-top: 15px;">
+                            <div class="detail-section">
+                                <div class="section-title">🎨 Printing Details</div>
+                                <div class="detail-item">
+                                    <span class="detail-label">No of Colors:</span>
+                                    <span class="detail-value"><%= (product.printing && product.printing.noOfColors) || 'Not specified' %></span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Print Type:</span>
+                                    <span class="detail-value"><%= (product.printing && product.printing.type) || 'Not specified' %></span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Colors Used:</span>
+                                    <span class="detail-value"><%= (product.printing && product.printing.colors) || 'Not specified' %></span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Sample Type:</span>
+                                    <span class="detail-value"><%= product.sampleType || 'Not specified' %></span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">No of Samples:</span>
+                                    <span class="detail-value"><%= product.noOfSamples || 'Not specified' %></span>
+                                </div>
+                            </div>
+                            
+                            <div class="detail-section">
+                                <div class="section-title">📷 Artwork & Drawing</div>
+                                <% if (product.drawingPath) { %>
+                                    <div class="detail-item">
+                                        <span class="detail-label">Artwork File:</span>
+                                        <span class="detail-value">
+                                            <a href="<%= product.drawingPath %>" target="_blank" style="color: #007bff; text-decoration: none;">
+                                                📎 View Artwork
+                                            </a>
+                                        </span>
+                                    </div>
+                                    <div style="margin-top: 10px;">
+                                        <img src="<%= product.drawingPath %>" alt="Product Artwork" 
+                                             style="max-width: 200px; max-height: 150px; border: 1px solid #ddd; border-radius: 4px;"
+                                             onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                                        <div style="display: none; padding: 20px; text-align: center; border: 1px solid #ddd; border-radius: 4px; color: #666;">
+                                            📄 File Preview Not Available
+                                        </div>
+                                    </div>
+                                <% } else { %>
+                                    <div class="detail-item">
+                                        <span class="detail-label">Artwork:</span>
+                                        <span class="detail-value">No artwork uploaded</span>
+                                    </div>
+                                <% } %>
+                            </div>
+                        </div>
+                        
                         <!-- Delivery Details (if applicable) -->
                         <% if (product.deliveredDate || product.requiredDate) { %>
                             <div class="details-grid" style="margin-top: 15px;">
@@ -220,6 +311,26 @@
                                             </span>
                                         </div>
                                     <% } %>
+                                    <div class="detail-item">
+                                        <span class="detail-label">Delivery Address:</span>
+                                        <span class="detail-value"><%= product.deliveryAddress || 'Not specified' %></span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <span class="detail-label">Customer Contact:</span>
+                                        <span class="detail-value"><%= product.customerContact || 'Not available' %></span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <span class="detail-label">Contact No:</span>
+                                        <span class="detail-value"><%= product.contactNo || 'Not available' %></span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <span class="detail-label">DC Details:</span>
+                                        <span class="detail-value"><%= product.dcDetails || 'Not available' %></span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <span class="detail-label">Courier Details:</span>
+                                        <span class="detail-value"><%= product.courierDetails || 'Not available' %></span>
+                                    </div>
                                     <% if (product.approvalDate) { %>
                                         <div class="detail-item">
                                             <span class="detail-label">Approval Date:</span>
