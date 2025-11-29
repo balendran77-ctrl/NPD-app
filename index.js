@@ -881,6 +881,44 @@ app.get('/daily-updates', async (req, res) => {
 	res.render('daily-updates', { products, selectedDate: date });
 });
 
+// Current Status - search and view complete product details
+app.get('/current-status', async (req, res) => {
+	if (!req.session.user) return res.redirect('/login');
+	const { q = '', page = 1, limit = 50 } = req.query;
+	let products = [];
+	let totalProducts = 0;
+	
+	if (q.trim()) {
+		// Search in product name, customer name, and product code
+		const searchRegex = new RegExp(q.trim(), 'i');
+		const query = {
+			$or: [
+				{ productName: searchRegex },
+				{ customerName: searchRegex },
+				{ productCode: searchRegex }
+			]
+		};
+		
+		totalProducts = await Product.countDocuments(query);
+		products = await Product.find(query)
+			.sort({ updatedAt: -1 })
+			.skip((page - 1) * limit)
+			.limit(parseInt(limit))
+			.lean();
+	}
+	
+	const totalPages = Math.ceil(totalProducts / limit);
+	
+	res.render('current-status', {
+		products,
+		q,
+		page: parseInt(page),
+		limit: parseInt(limit),
+		totalProducts,
+		totalPages
+	});
+});
+
 // Admin user management routes
 app.get('/admin/users', async (req, res) => {
 	if (!req.session.user) {

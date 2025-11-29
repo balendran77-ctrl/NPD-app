@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Current Status - Product Search</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+    body { font-family: Arial, sans-serif; background: #f9f9f9; margin: 0; padding: 0; }
+    .container { max-width: 1200px; margin: 30px auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.07); }
+    h2 { text-align: center; margin-bottom: 30px; }
+    
+    /* Search Form */
+    .search-form { background: #f8f9fa; padding: 20px; border-radius: 6px; margin-bottom: 30px; }
+    .search-input { width: 70%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 16px; }
+    .search-btn { padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; margin-left: 10px; }
+    .search-btn:hover { background: #0056b3; }
+    .search-info { margin-top: 15px; color: #666; font-size: 14px; }
+    
+    /* Product Cards */
+    .product-grid { display: grid; gap: 20px; }
+    .product-card { border: 1px solid #ddd; border-radius: 8px; padding: 20px; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    .product-header { border-bottom: 2px solid #f0f0f0; padding-bottom: 15px; margin-bottom: 15px; }
+    .product-name { font-size: 20px; font-weight: bold; color: #333; margin-bottom: 5px; }
+    .product-code { color: #666; font-size: 14px; }
+    .customer-name { color: #007bff; font-size: 16px; font-weight: 500; }
+    
+    /* Product Details Sections */
+    .details-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 15px; }
+    .detail-section { border: 1px solid #e9ecef; border-radius: 6px; padding: 15px; }
+    .section-title { font-weight: bold; color: #495057; margin-bottom: 10px; padding-bottom: 5px; border-bottom: 1px solid #dee2e6; }
+    .detail-item { margin-bottom: 8px; display: flex; }
+    .detail-label { font-weight: 500; width: 140px; color: #6c757d; flex-shrink: 0; }
+    .detail-value { color: #333; flex: 1; }
+    
+    /* Status Badges */
+    .status-badge { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; text-transform: uppercase; }
+    .status-request { background: #fff3cd; color: #856404; }
+    .status-submitted { background: #d4edda; color: #155724; }
+    .status-approved { background: #d1ecf1; color: #0c5460; }
+    .status-rejected { background: #f8d7da; color: #721c24; }
+    .status-resample { background: #ffeaa7; color: #6c5ce7; }
+    .status-hold { background: #fd79a8; color: #2d3436; }
+    .status-cancelled { background: #ddd; color: #333; }
+    
+    /* Delivery Status */
+    .delivery-ontime { color: #28a745; font-weight: 600; }
+    .delivery-delayed { color: #dc3545; font-weight: 600; }
+    .delivery-pending { color: #ffc107; font-weight: 600; }
+    
+    /* Pagination */
+    .pagination { text-align: center; margin: 30px 0; }
+    .pagination a, .pagination span { display: inline-block; padding: 8px 12px; margin: 0 4px; text-decoration: none; border: 1px solid #ddd; border-radius: 4px; }
+    .pagination a:hover { background: #f8f9fa; }
+    .pagination .current { background: #007bff; color: white; border-color: #007bff; }
+    
+    /* No Results */
+    .no-results { text-align: center; padding: 60px 20px; color: #666; }
+    .no-results h3 { margin-bottom: 10px; }
+    
+    /* Actions */
+    .product-actions { margin-top: 15px; padding-top: 15px; border-top: 1px solid #f0f0f0; }
+    .action-btn { padding: 6px 12px; background: #28a745; color: white; text-decoration: none; border-radius: 4px; font-size: 14px; margin-right: 10px; }
+    .action-btn:hover { background: #218838; }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .container { margin: 10px; padding: 15px; }
+        .details-grid { grid-template-columns: 1fr; gap: 15px; }
+        .search-input { width: 100%; margin-bottom: 10px; }
+        .search-btn { margin-left: 0; width: 100%; }
+    }
+    </style>
+</head>
+<body>
+    <%- include('partials/_nav') %>
+    <div class="container">
+        <h2>Current Status - Product Search</h2>
+        
+        <!-- Search Form -->
+        <div class="search-form">
+            <form method="get" action="/current-status">
+                <input type="text" name="q" value="<%= q %>" placeholder="Search by Product Name, Customer Name, or Product Code..." class="search-input" />
+                <button type="submit" class="search-btn">Search</button>
+                <input type="hidden" name="page" value="1" />
+                <input type="hidden" name="limit" value="<%= limit %>" />
+            </form>
+            <% if (q) { %>
+                <div class="search-info">
+                    Showing <%= totalProducts %> result(s) for "<%= q %>"
+                    <% if (totalPages > 1) { %>
+                        - Page <%= page %> of <%= totalPages %>
+                    <% } %>
+                </div>
+            <% } %>
+        </div>
+        
+        <!-- Results -->
+        <% if (q && products.length > 0) { %>
+            <div class="product-grid">
+                <% products.forEach(function(product) { %>
+                    <div class="product-card">
+                        <!-- Product Header -->
+                        <div class="product-header">
+                            <div class="product-name"><%= product.productName %></div>
+                            <div class="product-code">Product Code: <%= product.productCode || 'Not specified' %></div>
+                            <div class="customer-name">Customer: <%= product.customerName %></div>
+                        </div>
+                        
+                        <!-- Product Details Grid -->
+                        <div class="details-grid">
+                            <!-- Specifications Section -->
+                            <div class="detail-section">
+                                <div class="section-title">📋 Product Specifications</div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Dimensions:</span>
+                                    <span class="detail-value"><%= product.dimensions || 'Not specified' %></span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Weight:</span>
+                                    <span class="detail-value"><%= product.weight || 'Not specified' %></span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Material:</span>
+                                    <span class="detail-value"><%= product.material || 'Not specified' %></span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Color:</span>
+                                    <span class="detail-value"><%= product.color || 'Not specified' %></span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Special Notes:</span>
+                                    <span class="detail-value"><%= product.specialRequirements || 'None' %></span>
+                                </div>
+                            </div>
+                            
+                            <!-- Status & Timeline Section -->
+                            <div class="detail-section">
+                                <div class="section-title">📊 Current Status & Timeline</div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Overall Status:</span>
+                                    <span class="detail-value">
+                                        <% if (!product.deliveredDate) { %>
+                                            <span class="status-badge status-request">Sample Request Given</span>
+                                        <% } else if (product.deliveredDate && !product.approvalStatus) { %>
+                                            <span class="status-badge status-submitted">Sample Submitted for Approval</span>
+                                        <% } else if (product.approvalStatus === 'Approved') { %>
+                                            <span class="status-badge status-approved">Sample Approved</span>
+                                        <% } else if (product.approvalStatus === 'Rejected') { %>
+                                            <span class="status-badge status-rejected">Sample Rejected</span>
+                                        <% } else if (product.approvalStatus === 'Resample') { %>
+                                            <span class="status-badge status-resample">Submit Fresh Sample</span>
+                                        <% } else if (product.approvalStatus && product.approvalStatus.toLowerCase().includes('hold')) { %>
+                                            <span class="status-badge status-hold"><%= product.approvalStatus %></span>
+                                        <% } else if (product.approvalStatus && product.approvalStatus.toLowerCase().includes('cancel')) { %>
+                                            <span class="status-badge status-cancelled"><%= product.approvalStatus %></span>
+                                        <% } else { %>
+                                            <span class="status-badge status-request"><%= product.approvalStatus || 'No Status' %></span>
+                                        <% } %>
+                                    </span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Request Date:</span>
+                                    <span class="detail-value">
+                                        <%= product.createdAt ? new Date(product.createdAt).toLocaleDateString('en-IN', { 
+                                            timeZone: 'Asia/Kolkata',
+                                            day: '2-digit', month: '2-digit', year: 'numeric'
+                                        }) : 'Not available' %>
+                                    </span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Required Date:</span>
+                                    <span class="detail-value">
+                                        <%= product.requiredDate ? new Date(product.requiredDate).toLocaleDateString('en-IN', { 
+                                            day: '2-digit', month: '2-digit', year: 'numeric'
+                                        }) : 'Not specified' %>
+                                    </span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Last Updated:</span>
+                                    <span class="detail-value">
+                                        <%= product.updatedAt ? new Date(product.updatedAt).toLocaleDateString('en-IN', { 
+                                            timeZone: 'Asia/Kolkata',
+                                            day: '2-digit', month: '2-digit', year: 'numeric',
+                                            hour: '2-digit', minute: '2-digit'
+                                        }) : 'Not available' %>
+                                    </span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Created By:</span>
+                                    <span class="detail-value"><%= product.createdBy || 'Unknown' %></span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Delivery Details (if applicable) -->
+                        <% if (product.deliveredDate || product.requiredDate) { %>
+                            <div class="details-grid" style="margin-top: 15px;">
+                                <div class="detail-section">
+                                    <div class="section-title">🚚 Delivery Status</div>
+                                    <div class="detail-item">
+                                        <span class="detail-label">Delivered Date:</span>
+                                        <span class="detail-value">
+                                            <%= product.deliveredDate ? new Date(product.deliveredDate).toLocaleDateString('en-IN', { 
+                                                day: '2-digit', month: '2-digit', year: 'numeric'
+                                            }) : 'Not delivered yet' %>
+                                        </span>
+                                    </div>
+                                    <% if (product.deliveredDate && product.requiredDate) { %>
+                                        <div class="detail-item">
+                                            <span class="detail-label">Delivery Status:</span>
+                                            <span class="detail-value">
+                                                <% 
+                                                    const deliveredDate = new Date(product.deliveredDate);
+                                                    const requiredDate = new Date(product.requiredDate);
+                                                    if (deliveredDate <= requiredDate) {
+                                                %>
+                                                    <span class="delivery-ontime">✅ On Time</span>
+                                                <% } else { %>
+                                                    <span class="delivery-delayed">❌ Delayed</span>
+                                                <% } %>
+                                            </span>
+                                        </div>
+                                    <% } %>
+                                    <% if (product.approvalDate) { %>
+                                        <div class="detail-item">
+                                            <span class="detail-label">Approval Date:</span>
+                                            <span class="detail-value">
+                                                <%= new Date(product.approvalDate).toLocaleDateString('en-IN', { 
+                                                    day: '2-digit', month: '2-digit', year: 'numeric'
+                                                }) %>
+                                            </span>
+                                        </div>
+                                    <% } %>
+                                </div>
+                                
+                                <!-- Comments Section -->
+                                <div class="detail-section">
+                                    <div class="section-title">💬 Comments & Notes</div>
+                                    <div class="detail-item">
+                                        <span class="detail-label">Comments:</span>
+                                        <span class="detail-value"><%= product.comments || 'No comments' %></span>
+                                    </div>
+                                    <% if (product.approvalComments) { %>
+                                        <div class="detail-item">
+                                            <span class="detail-label">Approval Notes:</span>
+                                            <span class="detail-value"><%= product.approvalComments %></span>
+                                        </div>
+                                    <% } %>
+                                </div>
+                            </div>
+                        <% } %>
+                        
+                        <!-- Actions -->
+                        <div class="product-actions">
+                            <a href="/update-product/<%= product._id %>" class="action-btn">Update Status</a>
+                        </div>
+                    </div>
+                <% }); %>
+            </div>
+            
+            <!-- Pagination -->
+            <% if (totalPages > 1) { %>
+                <div class="pagination">
+                    <% if (page > 1) { %>
+                        <a href="/current-status?q=<%= encodeURIComponent(q) %>&page=<%= page - 1 %>&limit=<%= limit %>">&laquo; Previous</a>
+                    <% } %>
+                    
+                    <% for (let i = Math.max(1, page - 2); i <= Math.min(totalPages, page + 2); i++) { %>
+                        <% if (i === page) { %>
+                            <span class="current"><%= i %></span>
+                        <% } else { %>
+                            <a href="/current-status?q=<%= encodeURIComponent(q) %>&page=<%= i %>&limit=<%= limit %>"><%= i %></a>
+                        <% } %>
+                    <% } %>
+                    
+                    <% if (page < totalPages) { %>
+                        <a href="/current-status?q=<%= encodeURIComponent(q) %>&page=<%= page + 1 %>&limit=<%= limit %>">Next &raquo;</a>
+                    <% } %>
+                </div>
+            <% } %>
+            
+        <% } else if (q) { %>
+            <div class="no-results">
+                <h3>No products found</h3>
+                <p>No products match your search for "<%= q %>". Try different keywords or check the spelling.</p>
+            </div>
+        <% } else { %>
+            <div class="no-results">
+                <h3>Search for Products</h3>
+                <p>Enter a product name, customer name, or product code to search for detailed product information.</p>
+            </div>
+        <% } %>
+        
+        <div style="margin-top: 30px; text-align: center;">
+            <a href="/" style="color: #007bff; text-decoration: none;">&larr; Back to Home</a>
+        </div>
+    </div>
+</body>
+</html>
