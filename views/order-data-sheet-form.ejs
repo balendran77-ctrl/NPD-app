@@ -156,12 +156,12 @@
             <!-- Reel Size and Cutting Size (moved below Layers table) -->
             <div style="margin-top: 20px; margin-bottom: 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
                 <div>
-                    <label for="reelSize">Reel Size:</label>
-                    <input type="text" id="reelSize" name="reelSize" value="<%= product.orderDataSheet.reelSize || '' %>" placeholder="e.g., 1200mm" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+                    <label for="reelSize">Reel Size (cm):</label>
+                    <input type="text" id="reelSize" name="reelSize" value="<%= product.orderDataSheet.reelSize || '' %>" placeholder="e.g., 120" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
                 </div>
                 <div>
-                    <label for="cuttingSize">Cutting Size:</label>
-                    <input type="text" id="cuttingSize" name="cuttingSize" value="<%= product.orderDataSheet.cuttingSize || '' %>" placeholder="e.g., 600mm" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+                    <label for="cuttingSize">Cutting Size (cm):</label>
+                    <input type="text" id="cuttingSize" name="cuttingSize" value="<%= product.orderDataSheet.cuttingSize || '' %>" placeholder="e.g., 60" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
                 </div>
             </div>
             
@@ -240,12 +240,12 @@
             
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
                 <div>
-                    <label for="dieCuttingBoardReelSize">Die cutting Board Reel size:</label>
-                    <input type="text" id="dieCuttingBoardReelSize" name="dieCuttingBoardReelSize" value="<%= product.orderDataSheet.dieCuttingBoardReelSize || '' %>" placeholder="e.g., 1200mm" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+                    <label for="dieCuttingBoardReelSize">Die cutting Board Reel size (cm):</label>
+                    <input type="text" id="dieCuttingBoardReelSize" name="dieCuttingBoardReelSize" value="<%= product.orderDataSheet.dieCuttingBoardReelSize || '' %>" placeholder="e.g., 120" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
                 </div>
                 <div>
-                    <label for="dieCuttingBoardCuttingSize">Die cutting board cutting size:</label>
-                    <input type="text" id="dieCuttingBoardCuttingSize" name="dieCuttingBoardCuttingSize" value="<%= product.orderDataSheet.dieCuttingBoardCuttingSize || '' %>" placeholder="e.g., 600mm" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+                    <label for="dieCuttingBoardCuttingSize">Die cutting board cutting size (cm):</label>
+                    <input type="text" id="dieCuttingBoardCuttingSize" name="dieCuttingBoardCuttingSize" value="<%= product.orderDataSheet.dieCuttingBoardCuttingSize || '' %>" placeholder="e.g., 60" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
                 </div>
             </div>
             
