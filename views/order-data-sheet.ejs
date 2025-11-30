@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Order Data Sheet (ODS)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+    body { font-family: Arial, sans-serif; background: #f9f9f9; margin: 0; padding: 0; }
+    .container { max-width: 1000px; margin: 30px auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.07); }
+    h2 { text-align: center; margin-bottom: 30px; color: #333; }
+    
+    /* Search Form */
+    .search-form { background: #f8f9fa; padding: 20px; border-radius: 6px; margin-bottom: 30px; }
+    .search-input { width: 70%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 16px; }
+    .search-btn { padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; margin-left: 10px; }
+    .search-btn:hover { background: #0056b3; }
+    .search-info { margin-top: 15px; color: #666; font-size: 14px; }
+    
+    /* Products Table */
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+    th { background: #f0f0f0; font-weight: 600; }
+    tr:hover { background: #f8f9fa; }
+    .action-btn { padding: 6px 12px; background: #28a745; color: white; text-decoration: none; border-radius: 4px; font-size: 14px; display: inline-block; }
+    .action-btn:hover { background: #218838; }
+    
+    /* Pagination */
+    .pagination { text-align: center; margin: 30px 0; }
+    .pagination a, .pagination span { display: inline-block; padding: 8px 12px; margin: 0 4px; text-decoration: none; border: 1px solid #ddd; border-radius: 4px; }
+    .pagination a:hover { background: #f8f9fa; }
+    .pagination .current { background: #007bff; color: white; border-color: #007bff; }
+    
+    /* No Results */
+    .no-results { text-align: center; padding: 60px 20px; color: #666; }
+    .no-results h3 { margin-bottom: 10px; }
+    
+    /* Back Link */
+    .back-link { margin-top: 20px; text-align: center; }
+    .back-link a { color: #007bff; text-decoration: none; }
+    .back-link a:hover { text-decoration: underline; }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .container { margin: 10px; padding: 15px; }
+        .search-input { width: 100%; margin-bottom: 10px; }
+        .search-btn { margin-left: 0; width: 100%; }
+        table { font-size: 14px; }
+    }
+    </style>
+</head>
+<body>
+    <%- include('partials/_nav') %>
+    <div class="container">
+        <h2>Order Data Sheet (ODS)</h2>
+        
+        <!-- Search Form -->
+        <div class="search-form">
+            <form method="get" action="/order-data-sheet">
+                <input type="text" name="q" value="<%= q %>" placeholder="Search by Product Name, Customer Name, or SL No..." class="search-input" />
+                <button type="submit" class="search-btn">Search</button>
+                <input type="hidden" name="page" value="1" />
+                <input type="hidden" name="limit" value="<%= limit %>" />
+            </form>
+            <% if (q) { %>
+                <div class="search-info">
+                    Showing <%= totalProducts %> result(s) for "<%= q %>"
+                    <% if (totalPages > 1) { %>
+                        - Page <%= page %> of <%= totalPages %>
+                    <% } %>
+                </div>
+            <% } %>
+        </div>
+        
+        <!-- Results -->
+        <% if (q && products.length > 0) { %>
+            <table>
+                <thead>
+                    <tr>
+                        <th>SL No</th>
+                        <th>Product Name</th>
+                        <th>Customer Name</th>
+                        <th>Ply</th>
+                        <th>Created Date</th>
+                        <th>ODS Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% products.forEach(function(product, index) { %>
+                        <tr>
+                            <td><%= ((page - 1) * limit) + index + 1 %></td>
+                            <td><%= product.productName %></td>
+                            <td><%= product.customerName %></td>
+                            <td><%= (product.specifications && product.specifications.ply) || 'N/A' %></td>
+                            <td><%= product.createdAt ? new Date(product.createdAt).toLocaleDateString('en-IN', { 
+                                day: '2-digit', month: '2-digit', year: 'numeric'
+                            }) : 'N/A' %></td>
+                            <td>
+                                <% if (product.orderDataSheet && product.orderDataSheet.layers && product.orderDataSheet.layers.length > 0) { %>
+                                    <span style="color: #28a745; font-weight: 600;">✓ Completed</span>
+                                <% } else { %>
+                                    <span style="color: #ffc107; font-weight: 600;">⚠ Pending</span>
+                                <% } %>
+                            </td>
+                            <td>
+                                <a href="/order-data-sheet/<%= product._id %>" class="action-btn">
+                                    <% if (product.orderDataSheet && product.orderDataSheet.layers && product.orderDataSheet.layers.length > 0) { %>
+                                        Edit ODS
+                                    <% } else { %>
+                                        Add ODS
+                                    <% } %>
+                                </a>
+                            </td>
+                        </tr>
+                    <% }); %>
+                </tbody>
+            </table>
+            
+            <!-- Pagination -->
+            <% if (totalPages > 1) { %>
+                <div class="pagination">
+                    <% if (page > 1) { %>
+                        <a href="/order-data-sheet?q=<%= encodeURIComponent(q) %>&page=<%= page - 1 %>&limit=<%= limit %>">&laquo; Previous</a>
+                    <% } %>
+                    
+                    <% for (let i = Math.max(1, page - 2); i <= Math.min(totalPages, page + 2); i++) { %>
+                        <% if (i === page) { %>
+                            <span class="current"><%= i %></span>
+                        <% } else { %>
+                            <a href="/order-data-sheet?q=<%= encodeURIComponent(q) %>&page=<%= i %>&limit=<%= limit %>"><%= i %></a>
+                        <% } %>
+                    <% } %>
+                    
+                    <% if (page < totalPages) { %>
+                        <a href="/order-data-sheet?q=<%= encodeURIComponent(q) %>&page=<%= page + 1 %>&limit=<%= limit %>">Next &raquo;</a>
+                    <% } %>
+                </div>
+            <% } %>
+            
+        <% } else if (q) { %>
+            <div class="no-results">
+                <h3>No products found</h3>
+                <p>No products match your search for "<%= q %>". Try different keywords or check the spelling.</p>
+            </div>
+        <% } else { %>
+            <div class="no-results">
+                <h3>Search for Products</h3>
+                <p>Enter a product name, customer name, or SL number to search for products and manage their Order Data Sheet.</p>
+            </div>
+        <% } %>
+        
+        <div class="back-link">
+            <a href="/">&larr; Back to Home</a>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Order Data Sheet - <%= product.productName %></title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+    body { font-family: Arial, sans-serif; background: #f9f9f9; margin: 0; padding: 0; }
+    .container { max-width: 1000px; margin: 30px auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.07); }
+    h2 { text-align: center; margin-bottom: 10px; color: #333; }
+    .product-info { background: #f8f9fa; padding: 15px; border-radius: 6px; margin-bottom: 30px; }
+    .product-info p { margin: 5px 0; color: #555; }
+    .product-info strong { color: #333; }
+    
+    /* Form Styles */
+    form { margin-top: 20px; }
+    label { display: block; font-weight: 600; margin-top: 15px; margin-bottom: 5px; color: #333; }
+    
+    /* Table Styles */
+    .ods-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    .ods-table th { background: #007bff; color: white; padding: 12px; text-align: left; border: 1px solid #0056b3; }
+    .ods-table td { padding: 10px; border: 1px solid #ddd; }
+    .ods-table tr:nth-child(even) { background: #f8f9fa; }
+    .ods-table input, .ods-table select { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+    .layer-name { font-weight: 600; color: #333; background: #e9ecef; }
+    
+    /* Buttons */
+    .btn-container { margin-top: 30px; text-align: center; }
+    .btn-save { padding: 12px 30px; background: #28a745; color: white; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; }
+    .btn-save:hover { background: #218838; }
+    .btn-back { padding: 12px 30px; background: #6c757d; color: white; text-decoration: none; border-radius: 4px; font-size: 16px; display: inline-block; margin-left: 10px; }
+    .btn-back:hover { background: #5a6268; }
+    
+    /* Info Box */
+    .info-box { background: #d1ecf1; border-left: 4px solid #0c5460; padding: 15px; margin-bottom: 20px; border-radius: 4px; }
+    .info-box p { margin: 5px 0; color: #0c5460; }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .container { margin: 10px; padding: 15px; }
+        .ods-table { font-size: 14px; }
+        .btn-container { display: flex; flex-direction: column; gap: 10px; }
+        .btn-back { margin-left: 0; }
+    }
+    </style>
+</head>
+<body>
+    <%- include('partials/_nav') %>
+    <div class="container">
+        <h2>Order Data Sheet (ODS)</h2>
+        
+        <!-- Product Information -->
+        <div class="product-info">
+            <p><strong>Product Name:</strong> <%= product.productName %></p>
+            <p><strong>Customer Name:</strong> <%= product.customerName %></p>
+            <p><strong>Ply:</strong> <%= ply %> Ply</p>
+            <% if (product.specifications) { %>
+                <p><strong>Dimensions:</strong> 
+                    <%= product.specifications.length || 'N/A' %> × 
+                    <%= product.specifications.width || 'N/A' %> × 
+                    <%= product.specifications.height || 'N/A' %> 
+                    <%= product.specifications.unitOfMeasurement || '' %>
+                </p>
+            <% } %>
+        </div>
+        
+        <!-- Info Box -->
+        <div class="info-box">
+            <p><strong>Instructions:</strong></p>
+            <p>• Fill in the details for each layer based on the <%= ply %>-ply box structure.</p>
+            <p>• For <strong>Flute</strong> rows, select the flute type (B, C, or E).</p>
+            <p>• GSM = Grams per Square Meter, BF = Bursting Factor</p>
+        </div>
+        
+        <!-- ODS Form -->
+        <form method="post" action="/order-data-sheet/<%= product._id %>">
+            <table class="ods-table">
+                <thead>
+                    <tr>
+                        <th style="width: 20%;">Layer</th>
+                        <th style="width: 15%;">GSM</th>
+                        <th style="width: 15%;">BF</th>
+                        <th style="width: 15%;">Shade</th>
+                        <th style="width: 20%;">Mill</th>
+                        <th style="width: 15%;">Flute Type</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% product.orderDataSheet.layers.forEach(function(layer, index) { %>
+                        <tr>
+                            <td class="layer-name">
+                                <%= layer.name %>
+                                <input type="hidden" name="layerName" value="<%= layer.name %>">
+                            </td>
+                            <td>
+                                <input type="text" name="gsm" value="<%= layer.gsm || '' %>" placeholder="e.g., 120">
+                            </td>
+                            <td>
+                                <input type="text" name="bf" value="<%= layer.bf || '' %>" placeholder="e.g., 1.8">
+                            </td>
+                            <td>
+                                <input type="text" name="shade" value="<%= layer.shade || '' %>" placeholder="e.g., White">
+                            </td>
+                            <td>
+                                <input type="text" name="mill" value="<%= layer.mill || '' %>" placeholder="e.g., Mill Name">
+                            </td>
+                            <td>
+                                <% if (layer.name && layer.name.toLowerCase().includes('flute')) { %>
+                                    <select name="fluteType">
+                                        <option value="">-- Select --</option>
+                                        <option value="B" <%= layer.fluteType === 'B' ? 'selected' : '' %>>B</option>
+                                        <option value="C" <%= layer.fluteType === 'C' ? 'selected' : '' %>>C</option>
+                                        <option value="E" <%= layer.fluteType === 'E' ? 'selected' : '' %>>E</option>
+                                    </select>
+                                <% } else { %>
+                                    <input type="hidden" name="fluteType" value="">
+                                    <span style="color: #999;">N/A</span>
+                                <% } %>
+                            </td>
+                        </tr>
+                    <% }); %>
+                </tbody>
+            </table>
+            
+            <div class="btn-container">
+                <button type="submit" class="btn-save">💾 Save Order Data Sheet</button>
+                <a href="/order-data-sheet" class="btn-back">⬅ Back to Search</a>
+            </div>
+        </form>
+    </div>
+</body>
+</html>

@@ -452,7 +452,18 @@ const productSchema = new mongoose.Schema({
 		date: String,
 		status: String,
 		details: String
-	}]
+	}],
+	// Order Data Sheet - ply-based layer structure
+	orderDataSheet: {
+		layers: [{
+			name: String, // Top, Flute 1, Packing 1, Flute 2, Packing 2
+			gsm: String,
+			bf: String,
+			shade: String,
+			mill: String,
+			fluteType: String // B, C, E (only for Flute rows)
+		}]
+	}
 }, { timestamps: true });
 const Product = mongoose.model('Product', productSchema);
 
@@ -950,6 +961,104 @@ app.get('/current-status', async (req, res) => {
 		totalProducts,
 		totalPages
 	});
+});
+
+// Order Data Sheet routes
+app.get('/order-data-sheet', async (req, res) => {
+	if (!req.session.user) return res.redirect('/login');
+	const { q = '', page = 1, limit = 50 } = req.query;
+	let products = [];
+	let totalProducts = 0;
+	
+	if (q.trim()) {
+		const searchRegex = new RegExp(q.trim(), 'i');
+		const query = {
+			$or: [
+				{ productName: searchRegex },
+				{ customerName: searchRegex }
+			]
+		};
+		
+		totalProducts = await Product.countDocuments(query);
+		products = await Product.find(query)
+			.sort({ createdAt: -1 })
+			.skip((page - 1) * limit)
+			.limit(parseInt(limit))
+			.lean();
+	}
+	
+	const totalPages = Math.ceil(totalProducts / limit);
+	
+	res.render('order-data-sheet', {
+		products,
+		q,
+		page: parseInt(page),
+		limit: parseInt(limit),
+		totalProducts,
+		totalPages
+	});
+});
+
+app.get('/order-data-sheet/:id', async (req, res) => {
+	if (!req.session.user) return res.redirect('/login');
+	const product = await Product.findById(req.params.id).lean();
+	if (!product) return res.status(404).send('Product not found');
+	
+	// Determine ply from specifications
+	const ply = parseInt(product.specifications?.ply) || 3;
+	
+	// Initialize layers if not present
+	if (!product.orderDataSheet || !product.orderDataSheet.layers || product.orderDataSheet.layers.length === 0) {
+		product.orderDataSheet = { layers: [] };
+		if (ply === 3) {
+			product.orderDataSheet.layers = [
+				{ name: 'Top', gsm: '', bf: '', shade: '', mill: '', fluteType: '' },
+				{ name: 'Flute 1', gsm: '', bf: '', shade: '', mill: '', fluteType: '' },
+				{ name: 'Packing 1', gsm: '', bf: '', shade: '', mill: '', fluteType: '' }
+			];
+		} else if (ply === 5) {
+			product.orderDataSheet.layers = [
+				{ name: 'Top', gsm: '', bf: '', shade: '', mill: '', fluteType: '' },
+				{ name: 'Flute 1', gsm: '', bf: '', shade: '', mill: '', fluteType: '' },
+				{ name: 'Packing 1', gsm: '', bf: '', shade: '', mill: '', fluteType: '' },
+				{ name: 'Flute 2', gsm: '', bf: '', shade: '', mill: '', fluteType: '' },
+				{ name: 'Packing 2', gsm: '', bf: '', shade: '', mill: '', fluteType: '' }
+			];
+		}
+	}
+	
+	res.render('order-data-sheet-form', { product, ply });
+});
+
+app.post('/order-data-sheet/:id', async (req, res) => {
+	if (!req.session.user) return res.redirect('/login');
+	
+	const layers = [];
+	const layerNames = req.body.layerName;
+	const gsms = req.body.gsm;
+	const bfs = req.body.bf;
+	const shades = req.body.shade;
+	const mills = req.body.mill;
+	const fluteTypes = req.body.fluteType;
+	
+	if (Array.isArray(layerNames)) {
+		for (let i = 0; i < layerNames.length; i++) {
+			layers.push({
+				name: layerNames[i],
+				gsm: gsms[i] || '',
+				bf: bfs[i] || '',
+				shade: shades[i] || '',
+				mill: mills[i] || '',
+				fluteType: fluteTypes[i] || ''
+			});
+		}
+	}
+	
+	await Product.findByIdAndUpdate(req.params.id, {
+		$set: { 'orderDataSheet.layers': layers }
+	});
+	
+	res.redirect('/order-data-sheet');
 });
 
 // Admin user management routes
