@@ -73,6 +73,19 @@
         
         <!-- ODS Form -->
         <form method="post" action="/order-data-sheet/<%= product._id %>">
+            <!-- Reel Size and Cutting Size -->
+            <div style="margin-bottom: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div>
+                    <label for="reelSize">Reel Size:</label>
+                    <input type="text" id="reelSize" name="reelSize" value="<%= product.orderDataSheet.reelSize || '' %>" placeholder="e.g., 1200mm" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+                </div>
+                <div>
+                    <label for="cuttingSize">Cutting Size:</label>
+                    <input type="text" id="cuttingSize" name="cuttingSize" value="<%= product.orderDataSheet.cuttingSize || '' %>" placeholder="e.g., 600mm" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+                </div>
+            </div>
+            
+            <h3 style="margin-top: 30px; margin-bottom: 15px; color: #333;">Layer Details</h3>
             <table class="ods-table">
                 <thead>
                     <tr>
@@ -95,10 +108,40 @@
                                 <input type="text" name="gsm" value="<%= layer.gsm || '' %>" placeholder="e.g., 120">
                             </td>
                             <td>
-                                <input type="text" name="bf" value="<%= layer.bf || '' %>" placeholder="e.g., 1.8">
+                                <select name="bf">
+                                    <option value="">-- Select BF --</option>
+                                    <option value="12" <%= layer.bf === '12' ? 'selected' : '' %>>12</option>
+                                    <option value="14" <%= layer.bf === '14' ? 'selected' : '' %>>14</option>
+                                    <option value="16" <%= layer.bf === '16' ? 'selected' : '' %>>16</option>
+                                    <option value="18" <%= layer.bf === '18' ? 'selected' : '' %>>18</option>
+                                    <option value="20" <%= layer.bf === '20' ? 'selected' : '' %>>20</option>
+                                    <option value="22" <%= layer.bf === '22' ? 'selected' : '' %>>22</option>
+                                    <option value="24" <%= layer.bf === '24' ? 'selected' : '' %>>24</option>
+                                    <option value="28" <%= layer.bf === '28' ? 'selected' : '' %>>28</option>
+                                    <option value="32" <%= layer.bf === '32' ? 'selected' : '' %>>32</option>
+                                    <option value="35" <%= layer.bf === '35' ? 'selected' : '' %>>35</option>
+                                    <option value="40" <%= layer.bf === '40' ? 'selected' : '' %>>40</option>
+                                    <option value="44" <%= layer.bf === '44' ? 'selected' : '' %>>44</option>
+                                </select>
                             </td>
                             <td>
-                                <input type="text" name="shade" value="<%= layer.shade || '' %>" placeholder="e.g., White">
+                                <input type="text" name="shade" list="shadeList<%= index %>" value="<%= layer.shade || '' %>" placeholder="Select or type shade">
+                                <datalist id="shadeList<%= index %>">
+                                    <option value="Natural">
+                                    <option value="GYT">
+                                    <option value="LGYT">
+                                    <option value="NKLB">
+                                    <option value="KLB">
+                                    <option value="WKLB">
+                                    <option value="WTL">
+                                    <option value="HWC">
+                                    <option value="LWC">
+                                    <option value="VTKF">
+                                    <option value="Whiteback">
+                                    <option value="FM">
+                                    <option value="TL">
+                                    <option value="Pink">
+                                </datalist>
                             </td>
                             <td>
                                 <input type="text" name="mill" value="<%= layer.mill || '' %>" placeholder="e.g., Mill Name">
@@ -121,11 +164,64 @@
                 </tbody>
             </table>
             
+            <!-- Processes Section -->
+            <h3 style="margin-top: 40px; margin-bottom: 15px; color: #333;">Process Details</h3>
+            <div style="margin-bottom: 15px;">
+                <label for="numProcesses">Number of Processes:</label>
+                <input type="number" id="numProcesses" min="1" max="10" value="<%= product.orderDataSheet.processes && product.orderDataSheet.processes.length > 0 ? product.orderDataSheet.processes.length : 1 %>" style="width: 150px; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                <button type="button" onclick="generateProcessRows()" style="padding: 8px 16px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; margin-left: 10px;">Generate Rows</button>
+            </div>
+            
+            <table class="ods-table" id="processTable">
+                <thead>
+                    <tr>
+                        <th style="width: 20%;">Process #</th>
+                        <th style="width: 40%;">Ups</th>
+                        <th style="width: 40%;">Joints</th>
+                    </tr>
+                </thead>
+                <tbody id="processTableBody">
+                    <% if (product.orderDataSheet.processes && product.orderDataSheet.processes.length > 0) { %>
+                        <% product.orderDataSheet.processes.forEach(function(process, index) { %>
+                            <tr>
+                                <td class="layer-name">Process <%= index + 1 %></td>
+                                <td><input type="text" name="ups" value="<%= process.ups || '' %>" placeholder="e.g., 2"></td>
+                                <td><input type="text" name="joints" value="<%= process.joints || '' %>" placeholder="e.g., 1"></td>
+                            </tr>
+                        <% }); %>
+                    <% } else { %>
+                        <tr>
+                            <td class="layer-name">Process 1</td>
+                            <td><input type="text" name="ups" value="" placeholder="e.g., 2"></td>
+                            <td><input type="text" name="joints" value="" placeholder="e.g., 1"></td>
+                        </tr>
+                    <% } %>
+                </tbody>
+            </table>
+            
             <div class="btn-container">
                 <button type="submit" class="btn-save">💾 Save Order Data Sheet</button>
                 <a href="/order-data-sheet" class="btn-back">⬅ Back to Search</a>
             </div>
         </form>
+        
+        <script>
+        function generateProcessRows() {
+            const numProcesses = parseInt(document.getElementById('numProcesses').value) || 1;
+            const tbody = document.getElementById('processTableBody');
+            tbody.innerHTML = '';
+            
+            for (let i = 1; i <= numProcesses; i++) {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="layer-name">Process ${i}</td>
+                    <td><input type="text" name="ups" value="" placeholder="e.g., 2"></td>
+                    <td><input type="text" name="joints" value="" placeholder="e.g., 1"></td>
+                `;
+                tbody.appendChild(row);
+            }
+        }
+        </script>
     </div>
 </body>
 </html>

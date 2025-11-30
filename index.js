@@ -455,6 +455,8 @@ const productSchema = new mongoose.Schema({
 	}],
 	// Order Data Sheet - ply-based layer structure
 	orderDataSheet: {
+		reelSize: String,
+		cuttingSize: String,
 		layers: [{
 			name: String, // Top, Flute 1, Packing 1, Flute 2, Packing 2
 			gsm: String,
@@ -462,6 +464,10 @@ const productSchema = new mongoose.Schema({
 			shade: String,
 			mill: String,
 			fluteType: String // B, C, E (only for Flute rows)
+		}],
+		processes: [{
+			ups: String,
+			joints: String
 		}]
 	}
 }, { timestamps: true });
@@ -1007,9 +1013,11 @@ app.get('/order-data-sheet/:id', async (req, res) => {
 	// Determine ply from specifications
 	const ply = parseInt(product.specifications?.ply) || 3;
 	
-	// Initialize layers if not present
-	if (!product.orderDataSheet || !product.orderDataSheet.layers || product.orderDataSheet.layers.length === 0) {
-		product.orderDataSheet = { layers: [] };
+	// Initialize orderDataSheet if not present
+	if (!product.orderDataSheet) {
+		product.orderDataSheet = { reelSize: '', cuttingSize: '', layers: [], processes: [] };
+	}
+	if (!product.orderDataSheet.layers || product.orderDataSheet.layers.length === 0) {
 		if (ply === 3) {
 			product.orderDataSheet.layers = [
 				{ name: 'Top', gsm: '', bf: '', shade: '', mill: '', fluteType: '' },
@@ -1025,6 +1033,9 @@ app.get('/order-data-sheet/:id', async (req, res) => {
 				{ name: 'Packing 2', gsm: '', bf: '', shade: '', mill: '', fluteType: '' }
 			];
 		}
+	}
+	if (!product.orderDataSheet.processes) {
+		product.orderDataSheet.processes = [];
 	}
 	
 	res.render('order-data-sheet-form', { product, ply });
@@ -1054,8 +1065,26 @@ app.post('/order-data-sheet/:id', async (req, res) => {
 		}
 	}
 	
+	const processes = [];
+	const ups = req.body.ups;
+	const joints = req.body.joints;
+	
+	if (Array.isArray(ups)) {
+		for (let i = 0; i < ups.length; i++) {
+			processes.push({
+				ups: ups[i] || '',
+				joints: joints[i] || ''
+			});
+		}
+	}
+	
 	await Product.findByIdAndUpdate(req.params.id, {
-		$set: { 'orderDataSheet.layers': layers }
+		$set: { 
+			'orderDataSheet.reelSize': req.body.reelSize || '',
+			'orderDataSheet.cuttingSize': req.body.cuttingSize || '',
+			'orderDataSheet.layers': layers,
+			'orderDataSheet.processes': processes
+		}
 	});
 	
 	res.redirect('/order-data-sheet');
