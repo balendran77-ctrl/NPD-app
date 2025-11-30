@@ -430,6 +430,9 @@ const productSchema = new mongoose.Schema({
 	approvalStatus: String, // Approved, Rejected, Resample
 	rejectionReason: String,
 	drawingPath: String, // File path for drawing/photo
+	// Order metrics (captured when status becomes Approved)
+	orderQuantity: Number,
+	orderValue: Number,
 	statusUpdates: [{
 		date: String,
 		status: String,
@@ -623,6 +626,17 @@ app.post('/update-product/:id', async (req, res) => {
 		approvalStatus: req.body.approvalStatus,
 		rejectionReason: req.body.rejectionReason
 	};
+	// Capture order metrics only when approved
+	if (req.body.approvalStatus === 'Approved') {
+		if (req.body.orderQuantity) {
+			const oq = Number(req.body.orderQuantity);
+			if (!isNaN(oq)) update.orderQuantity = oq;
+		}
+		if (req.body.orderValue) {
+			const ov = Number(req.body.orderValue);
+			if (!isNaN(ov)) update.orderValue = ov;
+		}
+	}
 	// If status update fields are present, push to statusUpdates array
 	if (req.body.statusDate && req.body.status && req.body.statusDetails) {
 		await Product.findByIdAndUpdate(req.params.id, {
@@ -726,6 +740,8 @@ app.get('/download-report', async (req, res) => {
 		'Courier Details': p.courierDetails,
 		'Approved Date': p.approvedDate,
 		'Approval Status': p.approvalStatus,
+		'Order Quantity': p.orderQuantity,
+		'Order Value': p.orderValue,
 		'Rejection Reason': p.rejectionReason,
 	'Drawing Path': p.drawingPath,
 	'Status Updates': Array.isArray(p.statusUpdates) ? p.statusUpdates.map(su => `${su.date}: ${su.status} - ${su.details}`).join('; ') : ''
@@ -845,6 +861,8 @@ app.get('/download-report', async (req, res) => {
 			'Courier Details': p.courierDetails,
 			'Approved Date': p.approvedDate,
 			'Approval Status': p.approvalStatus,
+			'Order Quantity': p.orderQuantity,
+			'Order Value': p.orderValue,
 			'Rejection Reason': p.rejectionReason,
 			'Drawing Path': p.drawingPath,
 			'Status Updates': Array.isArray(p.statusUpdates) ? p.statusUpdates.map(su => `${su.date}: ${su.status} - ${su.details}`).join('; ') : ''

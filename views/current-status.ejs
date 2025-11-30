@@ -194,6 +194,16 @@
                                         <% } %>
                                     </span>
                                 </div>
+                                <% if (product.approvalStatus === 'Approved') { %>
+                                <div class="detail-item">
+                                    <span class="detail-label">Order Quantity:</span>
+                                    <span class="detail-value"><%= product.orderQuantity || 'Not provided' %></span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Order Value:</span>
+                                    <span class="detail-value"><%= product.orderValue != null ? product.orderValue : 'Not provided' %></span>
+                                </div>
+                                <% } %>
                                 <div class="detail-item">
                                     <span class="detail-label">Request Date:</span>
                                     <span class="detail-value">

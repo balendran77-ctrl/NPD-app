@@ -41,6 +41,8 @@
                         <th>Updated By</th>
                         <th>Update Time</th>
                         <th>Current Status</th>
+                        <th>Order Qty</th>
+                        <th>Order Value</th>
                         <th>Actions</th>
                     </tr>
                     <% products.forEach(function(product, idx) { %>
@@ -79,6 +81,8 @@
                                     <%= product.approvalStatus || 'No status' %>
                                 <% } %>
                             </td>
+                            <td><%= product.approvalStatus === 'Approved' ? (product.orderQuantity || '') : '' %></td>
+                            <td><%= product.approvalStatus === 'Approved' ? (product.orderValue || '') : '' %></td>
                             <td>
                                 <a href="/update-product/<%= product._id %>">Update</a>
                             </td>

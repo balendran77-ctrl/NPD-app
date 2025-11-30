@@ -60,6 +60,8 @@
                 <th>Person Entering Data</th>
                 <th>Request Date</th>
                 <th>Current Status</th>
+                <th>Order Qty</th>
+                <th>Order Value</th>
                 <th>Required Date</th>
             </tr>
             <% products.forEach(function(product, idx) { %>
@@ -82,6 +84,8 @@
                             Submit fresh sample
                         <% } %>
                     </td>
+                    <td><%= product.approvalStatus === 'Approved' ? (product.orderQuantity || '') : '' %></td>
+                    <td><%= product.approvalStatus === 'Approved' ? (product.orderValue || '') : '' %></td>
                     <td><%= product.requiredDate %></td>
                 </tr>
             <% }); %>
