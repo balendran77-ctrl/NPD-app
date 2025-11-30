@@ -1102,6 +1102,35 @@ app.post('/order-data-sheet/:id', async (req, res) => {
 	res.redirect('/order-data-sheet');
 });
 
+// ODS Report
+app.get('/ods-report', async (req, res) => {
+	if (!req.session.user) return res.redirect('/login');
+	
+	const { q, id } = req.query;
+	let product = null;
+	let products = [];
+	
+	if (id) {
+		// Display specific product ODS report
+		product = await Product.findById(id).lean();
+	} else if (q) {
+		// Search for products
+		const searchRegex = new RegExp(q, 'i');
+		products = await Product.find({
+			$or: [
+				{ productName: searchRegex },
+				{ customerName: searchRegex },
+				{ slNo: parseInt(q) || -1 }
+			]
+		})
+		.sort({ createdAt: -1 })
+		.limit(20)
+		.lean();
+	}
+	
+	res.render('ods-report', { product, products, q: q || '', user: req.session.user });
+});
+
 // Admin user management routes
 app.get('/admin/users', async (req, res) => {
 	if (!req.session.user) {
