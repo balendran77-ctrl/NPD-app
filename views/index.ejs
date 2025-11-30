@@ -32,6 +32,7 @@
                 let linkStatus = cat;
                 if (cat === 'Ontime %') linkStatus = 'Ontime';
                 if (cat === 'Delayed %') linkStatus = 'Delayed';
+                if (cat === 'Order Quantity' || cat === 'Order Value') linkStatus = 'Sample approved';
                 const statusParam = encodeURIComponent(linkStatus);
                 const href = `/report?fromDate=${fromDate}&toDate=${toDate}&status=${statusParam}&dateField=createdAt`;
             %>
@@ -42,6 +43,8 @@
                     <div class="card-value">
                         <% if (cat === 'Ontime %' || cat === 'Delayed %') { %>
                             <%= total %>%
+                        <% } else if (cat === 'Order Value') { %>
+                            ₹ <%= total.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %>
                         <% } else { %>
                             <a href="<%= href %>"><%= total %></a>
                         <% } %>

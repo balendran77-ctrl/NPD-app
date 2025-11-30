@@ -264,6 +264,21 @@ app.get('/', async (req, res) => {
 
 	const dashboard = { labels, datasets, totals };
 
+	// Aggregate approved order metrics for the same period (based on createdAt range for consistency)
+	try {
+		const approvedAgg = await Product.aggregate([
+			{ $match: { createdAt: { $gte: start, $lte: end }, approvalStatus: 'Approved' } },
+			{ $group: { _id: null, qty: { $sum: { $ifNull: [ '$orderQuantity', 0 ] } }, val: { $sum: { $ifNull: [ '$orderValue', 0 ] } } } }
+		]);
+		const qtyTotal = approvedAgg.length ? approvedAgg[0].qty : 0;
+		const valTotal = approvedAgg.length ? approvedAgg[0].val : 0;
+		// Add KPI cards
+		totals['Order Quantity'] = qtyTotal;
+		totals['Order Value'] = Math.round((valTotal + Number.EPSILON) * 100) / 100; // 2 decimals
+	} catch(orderErr) {
+		console.warn('Order KPI aggregation failed:', orderErr.message);
+	}
+
 		dashboardCache.set(cacheKey, { ts: Date.now(), data: dashboard });
 		res.render('index', { user: req.session.user, dashboard, range });
 	} catch (err) {
