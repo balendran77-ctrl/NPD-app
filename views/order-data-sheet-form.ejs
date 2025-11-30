@@ -175,25 +175,58 @@
             <table class="ods-table" id="processTable">
                 <thead>
                     <tr>
-                        <th style="width: 20%;">Process #</th>
-                        <th style="width: 40%;">Ups</th>
-                        <th style="width: 40%;">Joints</th>
+                        <th style="width: 25%;">Process Name</th>
+                        <th style="width: 25%;">Machine</th>
+                        <th style="width: 25%;" id="upsHeader">Ups</th>
+                        <th style="width: 25%;">Joints</th>
                     </tr>
                 </thead>
                 <tbody id="processTableBody">
                     <% if (product.orderDataSheet.processes && product.orderDataSheet.processes.length > 0) { %>
                         <% product.orderDataSheet.processes.forEach(function(process, index) { %>
-                            <tr>
-                                <td class="layer-name">Process <%= index + 1 %></td>
-                                <td><input type="text" name="ups" value="<%= process.ups || '' %>" placeholder="e.g., 2"></td>
-                                <td><input type="text" name="joints" value="<%= process.joints || '' %>" placeholder="e.g., 1"></td>
+                            <tr data-process="<%= process.name || '' %>">
+                                <td>
+                                    <select name="processName" class="process-select" onchange="handleProcessChange(this)" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                                        <option value="">-- Select Process --</option>
+                                        <option value="Corrugation" <%= process.name === 'Corrugation' ? 'selected' : '' %>>Corrugation</option>
+                                        <option value="Printer slotter" <%= process.name === 'Printer slotter' ? 'selected' : '' %>>Printer slotter</option>
+                                        <option value="Die cutter" <%= process.name === 'Die cutter' ? 'selected' : '' %>>Die cutter</option>
+                                        <option value="Folder gluer" <%= process.name === 'Folder gluer' ? 'selected' : '' %>>Folder gluer</option>
+                                        <option value="Stitcher" <%= process.name === 'Stitcher' ? 'selected' : '' %>>Stitcher</option>
+                                        <option value="Bundling" <%= process.name === 'Bundling' ? 'selected' : '' %>>Bundling</option>
+                                        <option value="Flute laminator" <%= process.name === 'Flute laminator' ? 'selected' : '' %>>Flute laminator</option>
+                                        <option value="Manual gluing" <%= process.name === 'Manual gluing' ? 'selected' : '' %>>Manual gluing</option>
+                                        <option value="Assembly" <%= process.name === 'Assembly' ? 'selected' : '' %>>Assembly</option>
+                                        <option value="Creasing" <%= process.name === 'Creasing' ? 'selected' : '' %>>Creasing</option>
+                                        <option value="Slotting" <%= process.name === 'Slotting' ? 'selected' : '' %>>Slotting</option>
+                                    </select>
+                                </td>
+                                <td><select name="machine" class="machine-select" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;"><option value="<%= process.machine || '' %>"><%= process.machine || '-- Select --' %></option></select></td>
+                                <td><input type="text" name="ups" value="<%= process.ups || '' %>" placeholder="<%= process.name === 'Die cutter' ? 'e.g., D123' : 'e.g., 2' %>" class="ups-input"></td>
+                                <td><input type="text" name="joints" value="<%= process.joints || '' %>" placeholder="e.g., 1" class="joints-input"></td>
                             </tr>
                         <% }); %>
                     <% } else { %>
-                        <tr>
-                            <td class="layer-name">Process 1</td>
-                            <td><input type="text" name="ups" value="" placeholder="e.g., 2"></td>
-                            <td><input type="text" name="joints" value="" placeholder="e.g., 1"></td>
+                        <tr data-process="">
+                            <td>
+                                <select name="processName" class="process-select" onchange="handleProcessChange(this)" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                                    <option value="">-- Select Process --</option>
+                                    <option value="Corrugation">Corrugation</option>
+                                    <option value="Printer slotter">Printer slotter</option>
+                                    <option value="Die cutter">Die cutter</option>
+                                    <option value="Folder gluer">Folder gluer</option>
+                                    <option value="Stitcher">Stitcher</option>
+                                    <option value="Bundling" selected>Bundling</option>
+                                    <option value="Flute laminator">Flute laminator</option>
+                                    <option value="Manual gluing">Manual gluing</option>
+                                    <option value="Assembly">Assembly</option>
+                                    <option value="Creasing">Creasing</option>
+                                    <option value="Slotting">Slotting</option>
+                                </select>
+                            </td>
+                            <td><select name="machine" class="machine-select" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;"><option value="Bundling">Bundling</option></select></td>
+                            <td><input type="text" name="ups" value="1" placeholder="e.g., 2" class="ups-input"></td>
+                            <td><input type="text" name="joints" value="" placeholder="e.g., 1" class="joints-input"></td>
                         </tr>
                     <% } %>
                 </tbody>
@@ -213,14 +246,242 @@
             
             for (let i = 1; i <= numProcesses; i++) {
                 const row = document.createElement('tr');
+                const isLastRow = (i === numProcesses);
+                row.setAttribute('data-process', '');
+                
                 row.innerHTML = `
-                    <td class="layer-name">Process ${i}</td>
-                    <td><input type="text" name="ups" value="" placeholder="e.g., 2"></td>
-                    <td><input type="text" name="joints" value="" placeholder="e.g., 1"></td>
+                    <td>
+                        <select name="processName" class="process-select" onchange="handleProcessChange(this)" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                            <option value="">-- Select Process --</option>
+                            <option value="Corrugation">Corrugation</option>
+                            <option value="Printer slotter">Printer slotter</option>
+                            <option value="Die cutter">Die cutter</option>
+                            <option value="Folder gluer">Folder gluer</option>
+                            <option value="Stitcher">Stitcher</option>
+                            <option value="Bundling" ${isLastRow ? 'selected' : ''}>Bundling</option>
+                            <option value="Flute laminator">Flute laminator</option>
+                            <option value="Manual gluing">Manual gluing</option>
+                            <option value="Assembly">Assembly</option>
+                            <option value="Creasing">Creasing</option>
+                            <option value="Slotting">Slotting</option>
+                        </select>
+                    </td>
+                    <td><select name="machine" class="machine-select" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;"><option value="">-- Select --</option></select></td>
+                    <td><input type="text" name="ups" value="${isLastRow ? '1' : ''}" placeholder="e.g., 2" class="ups-input"></td>
+                    <td><input type="text" name="joints" value="" placeholder="e.g., 1" class="joints-input"></td>
                 `;
                 tbody.appendChild(row);
+                
+                // Initialize the ups/joints visibility for last row (bundling)
+                if (isLastRow) {
+                    const upsInput = row.querySelector('.ups-input');
+                    const jointsInput = row.querySelector('.joints-input');
+                    upsInput.readOnly = true;
+                    upsInput.style.backgroundColor = '#f0f0f0';
+                    
+                    // Update machine dropdown for bundling
+                    const machineSelect = row.querySelector('.machine-select');
+                    updateMachineDropdown(machineSelect, 'Bundling');
+                }
+            }
+            
+            updateColumnHeader();
+            validateProcessDuplicates();
+        }
+        
+        function handleProcessChange(selectElement) {
+            const row = selectElement.closest('tr');
+            const processName = selectElement.value;
+            const upsInput = row.querySelector('.ups-input');
+            const jointsInput = row.querySelector('.joints-input');
+            const machineSelect = row.querySelector('.machine-select');
+            const upsHeader = document.getElementById('upsHeader');
+            
+            // Update data-process attribute
+            row.setAttribute('data-process', processName);
+            
+            // Update machine dropdown based on process
+            updateMachineDropdown(machineSelect, processName);
+            
+            // Update column header based on Die cutter selection
+            updateColumnHeader();
+            
+            // Update placeholder for Die cutter
+            if (processName === 'Die cutter') {
+                upsInput.placeholder = 'e.g., D123';
+            } else {
+                upsInput.placeholder = 'e.g., 2';
+            }
+            
+            // Process names that require ups/joints input
+            const processesWithUpsJoints = ['Corrugation', 'Printer slotter', 'Die cutter'];
+            
+            if (processesWithUpsJoints.includes(processName)) {
+                // Enable ups/joints editing
+                upsInput.readOnly = false;
+                jointsInput.readOnly = false;
+                upsInput.style.backgroundColor = '';
+                jointsInput.style.backgroundColor = '';
+                if (upsInput.value === '' || upsInput.value === '1') {
+                    upsInput.value = '';
+                }
+            } else {
+                // Default ups to 1, disable editing
+                upsInput.value = '1';
+                upsInput.readOnly = true;
+                upsInput.style.backgroundColor = '#f0f0f0';
+                jointsInput.readOnly = false;
+                jointsInput.style.backgroundColor = '';
+            }
+            
+            validateProcessDuplicates();
+        }
+        
+        function updateMachineDropdown(machineSelect, processName) {
+            if (!machineSelect) return;
+            
+            const currentValue = machineSelect.value;
+            machineSelect.innerHTML = '';
+            
+            const machineOptions = {
+                'Printer slotter': ['Printing 3', 'Printing 5', 'FFG'],
+                'Die cutter': ['Auto Punching', 'Punching 1', 'Punching 2'],
+                'Folder gluer': ['Folder gluer 1', 'Folder gluer 2', 'Folder gluer 3'],
+                'Stitcher': ['Stitching 1', 'Stitching 2', 'Manual Stitching'],
+                'Corrugation': ['Board plant', '2 ply Corrugator']
+            };
+            
+            if (machineOptions[processName]) {
+                // Add select prompt
+                const defaultOption = document.createElement('option');
+                defaultOption.value = '';
+                defaultOption.textContent = '-- Select --';
+                machineSelect.appendChild(defaultOption);
+                
+                // Add specific machine options
+                machineOptions[processName].forEach(machine => {
+                    const option = document.createElement('option');
+                    option.value = machine;
+                    option.textContent = machine;
+                    if (machine === currentValue) {
+                        option.selected = true;
+                    }
+                    machineSelect.appendChild(option);
+                });
+            } else if (processName) {
+                // For other processes, use process name as machine name
+                const option = document.createElement('option');
+                option.value = processName;
+                option.textContent = processName;
+                option.selected = true;
+                machineSelect.appendChild(option);
+            } else {
+                // Empty process
+                const option = document.createElement('option');
+                option.value = '';
+                option.textContent = '-- Select --';
+                machineSelect.appendChild(option);
             }
         }
+        
+        function updateColumnHeader() {
+            const upsHeader = document.getElementById('upsHeader');
+            const selects = document.querySelectorAll('.process-select');
+            let hasDieCutter = false;
+            
+            selects.forEach(select => {
+                if (select.value === 'Die cutter') {
+                    hasDieCutter = true;
+                }
+            });
+            
+            upsHeader.textContent = hasDieCutter ? 'Die No' : 'Ups';
+        }
+        
+        function validateProcessDuplicates() {
+            const selects = document.querySelectorAll('.process-select');
+            const selectedValues = [];
+            const duplicates = [];
+            
+            selects.forEach((select, index) => {
+                const value = select.value;
+                if (value) {
+                    if (selectedValues.includes(value)) {
+                        duplicates.push(value);
+                        select.style.borderColor = 'red';
+                        select.style.backgroundColor = '#ffe6e6';
+                    } else {
+                        selectedValues.push(value);
+                        select.style.borderColor = '#ccc';
+                        select.style.backgroundColor = '';
+                    }
+                } else {
+                    select.style.borderColor = '#ccc';
+                    select.style.backgroundColor = '';
+                }
+            });
+            
+            // Show warning if duplicates exist
+            const existingWarning = document.getElementById('duplicateWarning');
+            if (existingWarning) {
+                existingWarning.remove();
+            }
+            
+            if (duplicates.length > 0) {
+                const warning = document.createElement('div');
+                warning.id = 'duplicateWarning';
+                warning.style.cssText = 'color: #d9534f; background: #ffe6e6; padding: 10px; margin: 10px 0; border-radius: 4px; border: 1px solid #d9534f;';
+                warning.innerHTML = `⚠️ Warning: Duplicate process names detected (${[...new Set(duplicates)].join(', ')}). Each process must be unique.`;
+                const processTable = document.getElementById('processTable');
+                processTable.parentNode.insertBefore(warning, processTable.nextSibling);
+            }
+        }
+        
+        // Validate on form submit
+        document.querySelector('form').addEventListener('submit', function(e) {
+            const selects = document.querySelectorAll('.process-select');
+            const selectedValues = [];
+            let hasDuplicates = false;
+            
+            selects.forEach(select => {
+                const value = select.value;
+                if (value && selectedValues.includes(value)) {
+                    hasDuplicates = true;
+                }
+                if (value) {
+                    selectedValues.push(value);
+                }
+            });
+            
+            if (hasDuplicates) {
+                e.preventDefault();
+                alert('Error: Duplicate process names detected. Each process must be unique.');
+                return false;
+            }
+        });
+        
+        // Initialize validation on page load for existing processes
+        document.addEventListener('DOMContentLoaded', function() {
+            updateColumnHeader();
+            const selects = document.querySelectorAll('.process-select');
+            selects.forEach(select => {
+                if (select.value) {
+                    const row = select.closest('tr');
+                    const machineSelect = row.querySelector('.machine-select');
+                    const currentMachine = machineSelect.value;
+                    
+                    // Update machine dropdown options
+                    updateMachineDropdown(machineSelect, select.value);
+                    
+                    // Restore the saved machine value if it exists
+                    if (currentMachine) {
+                        machineSelect.value = currentMachine;
+                    }
+                    
+                    handleProcessChange(select);
+                }
+            });
+        });
         </script>
     </div>
 </body>

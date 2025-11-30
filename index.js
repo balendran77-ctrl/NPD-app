@@ -466,6 +466,8 @@ const productSchema = new mongoose.Schema({
 			fluteType: String // B, C, E (only for Flute rows)
 		}],
 		processes: [{
+			name: String, // Corrugation, Printer slotter, Die cutter, etc.
+			machine: String,
 			ups: String,
 			joints: String
 		}]
@@ -1066,12 +1068,16 @@ app.post('/order-data-sheet/:id', async (req, res) => {
 	}
 	
 	const processes = [];
+	const processNames = req.body.processName;
+	const machines = req.body.machine;
 	const ups = req.body.ups;
 	const joints = req.body.joints;
 	
-	if (Array.isArray(ups)) {
-		for (let i = 0; i < ups.length; i++) {
+	if (Array.isArray(processNames)) {
+		for (let i = 0; i < processNames.length; i++) {
 			processes.push({
+				name: processNames[i] || '',
+				machine: machines[i] || '',
 				ups: ups[i] || '',
 				joints: joints[i] || ''
 			});
