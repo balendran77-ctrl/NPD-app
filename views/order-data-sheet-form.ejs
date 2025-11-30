@@ -73,17 +73,6 @@
         
         <!-- ODS Form -->
         <form method="post" action="/order-data-sheet/<%= product._id %>">
-            <!-- Reel Size and Cutting Size -->
-            <div style="margin-bottom: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                <div>
-                    <label for="reelSize">Reel Size:</label>
-                    <input type="text" id="reelSize" name="reelSize" value="<%= product.orderDataSheet.reelSize || '' %>" placeholder="e.g., 1200mm" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
-                </div>
-                <div>
-                    <label for="cuttingSize">Cutting Size:</label>
-                    <input type="text" id="cuttingSize" name="cuttingSize" value="<%= product.orderDataSheet.cuttingSize || '' %>" placeholder="e.g., 600mm" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
-                </div>
-            </div>
             
             <h3 style="margin-top: 30px; margin-bottom: 15px; color: #333;">Layer Details</h3>
             <table class="ods-table">
@@ -164,6 +153,18 @@
                 </tbody>
             </table>
             
+            <!-- Reel Size and Cutting Size (moved below Layers table) -->
+            <div style="margin-top: 20px; margin-bottom: 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div>
+                    <label for="reelSize">Reel Size:</label>
+                    <input type="text" id="reelSize" name="reelSize" value="<%= product.orderDataSheet.reelSize || '' %>" placeholder="e.g., 1200mm" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+                </div>
+                <div>
+                    <label for="cuttingSize">Cutting Size:</label>
+                    <input type="text" id="cuttingSize" name="cuttingSize" value="<%= product.orderDataSheet.cuttingSize || '' %>" placeholder="e.g., 600mm" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+                </div>
+            </div>
+            
             <!-- Processes Section -->
             <h3 style="margin-top: 40px; margin-bottom: 15px; color: #333;">Process Details</h3>
             <div style="margin-bottom: 15px;">
@@ -177,7 +178,7 @@
                     <tr>
                         <th style="width: 25%;">Process Name</th>
                         <th style="width: 25%;">Machine</th>
-                        <th style="width: 25%;" id="upsHeader">Ups</th>
+                        <th style="width: 25%;">Ups</th>
                         <th style="width: 25%;">Joints</th>
                     </tr>
                 </thead>
@@ -202,7 +203,7 @@
                                     </select>
                                 </td>
                                 <td><select name="machine" class="machine-select" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;"><option value="<%= process.machine || '' %>"><%= process.machine || '-- Select --' %></option></select></td>
-                                <td><input type="text" name="ups" value="<%= process.ups || '' %>" placeholder="<%= process.name === 'Die cutter' ? 'e.g., D123' : 'e.g., 2' %>" class="ups-input"></td>
+                                <td><input type="text" name="ups" value="<%= process.ups || '' %>" placeholder="e.g., 2" class="ups-input"></td>
                                 <td><input type="text" name="joints" value="<%= process.joints || '' %>" placeholder="e.g., 1" class="joints-input"></td>
                             </tr>
                         <% }); %>
@@ -231,6 +232,22 @@
                     <% } %>
                 </tbody>
             </table>
+            
+            <div style="margin-top: 20px; margin-bottom: 20px;">
+                <label for="dieNo" style="display: inline-block; width: 150px; font-weight: bold;">Die No:</label>
+                <input type="text" id="dieNo" name="dieNo" value="<%= product.orderDataSheet.dieNo || '' %>" placeholder="e.g., D123" style="width: 300px; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+                <div>
+                    <label for="dieCuttingBoardReelSize">Die cutting Board Reel size:</label>
+                    <input type="text" id="dieCuttingBoardReelSize" name="dieCuttingBoardReelSize" value="<%= product.orderDataSheet.dieCuttingBoardReelSize || '' %>" placeholder="e.g., 1200mm" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+                </div>
+                <div>
+                    <label for="dieCuttingBoardCuttingSize">Die cutting board cutting size:</label>
+                    <input type="text" id="dieCuttingBoardCuttingSize" name="dieCuttingBoardCuttingSize" value="<%= product.orderDataSheet.dieCuttingBoardCuttingSize || '' %>" placeholder="e.g., 600mm" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+                </div>
+            </div>
             
             <div class="btn-container">
                 <button type="submit" class="btn-save">💾 Save Order Data Sheet</button>
@@ -285,7 +302,6 @@
                 }
             }
             
-            updateColumnHeader();
             validateProcessDuplicates();
         }
         
@@ -295,23 +311,12 @@
             const upsInput = row.querySelector('.ups-input');
             const jointsInput = row.querySelector('.joints-input');
             const machineSelect = row.querySelector('.machine-select');
-            const upsHeader = document.getElementById('upsHeader');
             
             // Update data-process attribute
             row.setAttribute('data-process', processName);
             
             // Update machine dropdown based on process
             updateMachineDropdown(machineSelect, processName);
-            
-            // Update column header based on Die cutter selection
-            updateColumnHeader();
-            
-            // Update placeholder for Die cutter
-            if (processName === 'Die cutter') {
-                upsInput.placeholder = 'e.g., D123';
-            } else {
-                upsInput.placeholder = 'e.g., 2';
-            }
             
             // Process names that require ups/joints input
             const processesWithUpsJoints = ['Corrugation', 'Printer slotter', 'Die cutter'];
@@ -384,20 +389,6 @@
             }
         }
         
-        function updateColumnHeader() {
-            const upsHeader = document.getElementById('upsHeader');
-            const selects = document.querySelectorAll('.process-select');
-            let hasDieCutter = false;
-            
-            selects.forEach(select => {
-                if (select.value === 'Die cutter') {
-                    hasDieCutter = true;
-                }
-            });
-            
-            upsHeader.textContent = hasDieCutter ? 'Die No' : 'Ups';
-        }
-        
         function validateProcessDuplicates() {
             const selects = document.querySelectorAll('.process-select');
             const selectedValues = [];
@@ -462,7 +453,6 @@
         
         // Initialize validation on page load for existing processes
         document.addEventListener('DOMContentLoaded', function() {
-            updateColumnHeader();
             const selects = document.querySelectorAll('.process-select');
             selects.forEach(select => {
                 if (select.value) {

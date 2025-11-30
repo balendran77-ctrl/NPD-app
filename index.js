@@ -457,6 +457,9 @@ const productSchema = new mongoose.Schema({
 	orderDataSheet: {
 		reelSize: String,
 		cuttingSize: String,
+		dieNo: String,
+		dieCuttingBoardReelSize: String,
+		dieCuttingBoardCuttingSize: String,
 		layers: [{
 			name: String, // Top, Flute 1, Packing 1, Flute 2, Packing 2
 			gsm: String,
@@ -1088,6 +1091,9 @@ app.post('/order-data-sheet/:id', async (req, res) => {
 		$set: { 
 			'orderDataSheet.reelSize': req.body.reelSize || '',
 			'orderDataSheet.cuttingSize': req.body.cuttingSize || '',
+			'orderDataSheet.dieNo': req.body.dieNo || '',
+			'orderDataSheet.dieCuttingBoardReelSize': req.body.dieCuttingBoardReelSize || '',
+			'orderDataSheet.dieCuttingBoardCuttingSize': req.body.dieCuttingBoardCuttingSize || '',
 			'orderDataSheet.layers': layers,
 			'orderDataSheet.processes': processes
 		}
