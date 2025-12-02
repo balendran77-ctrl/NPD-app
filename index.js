@@ -1,12 +1,12 @@
 // ...existing code...
 // ...existing code...
 // Email and cron setup for daily updates
-const nodemailer = require('nodemailer');
+const sgMail = require('@sendgrid/mail');
 const cron = require('node-cron');
 
-// Gmail credentials (use app password for Gmail)
-const EMAIL_USER = 'rpplhosur@gmail.com';
-const EMAIL_PASS = process.env.GMAIL_APP_PASSWORD || '';
+// Email configuration (SendGrid uses API key instead of SMTP)
+const EMAIL_FROM = 'rpplhosur@gmail.com';
+const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY || '';
 const RECIPIENTS = [
     'bala@bharathpackagings.com',
     'rppl@bharathpackagings.com',
@@ -14,28 +14,15 @@ const RECIPIENTS = [
     'naveen@bharathpackagings.com'
 ];
 
-// Create transporter for Gmail with port 587 (TLS/STARTTLS)
-const transporter = nodemailer.createTransport({
-	host: 'smtp.gmail.com',
-	port: 587,
-	secure: false, // use STARTTLS
-	auth: {
-		user: EMAIL_USER,
-		pass: EMAIL_PASS
-	},
-	connectionTimeout: 15000,
-	greetingTimeout: 15000,
-	socketTimeout: 15000,
-	tls: {
-		rejectUnauthorized: true,
-		minVersion: 'TLSv1.2'
-	}
-});
+// Initialize SendGrid
+if (SENDGRID_API_KEY) {
+	sgMail.setApiKey(SENDGRID_API_KEY);
+}
 
 // Function to get yesterday's updates and send email
 async function sendDailyUpdatesEmail() {
-	if (!EMAIL_PASS) {
-		console.warn('GMAIL_APP_PASSWORD not set; skipping daily updates email.');
+	if (!SENDGRID_API_KEY) {
+		console.warn('SENDGRID_API_KEY not set; skipping daily updates email.');
 		return;
 	}
 	const now = new Date();
@@ -62,14 +49,14 @@ async function sendDailyUpdatesEmail() {
 		html += '</table>';
 	}
 
-	// Send email
-	await transporter.sendMail({
-		from: EMAIL_USER,
-		to: RECIPIENTS.join(','),
+	// Send email via SendGrid
+	await sgMail.send({
+		to: RECIPIENTS,
+		from: EMAIL_FROM,
 		subject: `Daily Updates Report - ${yesterday.toISOString().slice(0,10)}`,
 		html
 	});
-	console.log('Daily updates email sent to', EMAIL_USER);
+	console.log('Daily updates email sent to', RECIPIENTS.join(', '));
 }
 
 // Schedule job at 6 am every day
@@ -1262,13 +1249,14 @@ app.post('/admin/delete-user/:id', async (req, res) => {
 app.post('/admin/test-email', async (req, res) => {
 	if (!isAdmin(req)) return res.status(403).send('Forbidden: Admins only');
 	try {
-		if (!EMAIL_PASS) {
-			return res.status(400).send('GMAIL_APP_PASSWORD not set on server');
+		if (!SENDGRID_API_KEY) {
+			return res.status(400).send('SENDGRID_API_KEY not set on server');
 		}
-		const to = (req.body.to && req.body.to.trim()) || RECIPIENTS.join(',');
-		await transporter.sendMail({
-			from: EMAIL_USER,
-			to,
+		const toInput = (req.body.to && req.body.to.trim()) || '';
+		const toList = toInput ? toInput.split(',').map(e => e.trim()) : RECIPIENTS;
+		await sgMail.send({
+			to: toList,
+			from: EMAIL_FROM,
 			subject: 'Test Email - Daily Updates Mailer',
 			html: '<p>This is a test email from NPD-app. If you received this, email configuration works.</p>'
 		});
