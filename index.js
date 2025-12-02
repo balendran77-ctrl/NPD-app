@@ -1,5 +1,71 @@
 // ...existing code...
 // ...existing code...
+// Email and cron setup for daily updates
+const nodemailer = require('nodemailer');
+const cron = require('node-cron');
+
+// Gmail credentials (use app password for Gmail)
+const EMAIL_USER = 'rpplhosur@gmail.com';
+const EMAIL_PASS = process.env.GMAIL_APP_PASSWORD || '';
+const RECIPIENTS = [
+	'bala@bharathpackagings.com',
+	'rppl@bharathpackagings.com',
+	'marketing@bharathpackagings.com'
+];
+
+// Create transporter for Gmail
+const transporter = nodemailer.createTransport({
+	service: 'gmail',
+	auth: {
+		user: EMAIL_USER,
+		pass: EMAIL_PASS
+	}
+});
+
+// Function to get yesterday's updates and send email
+async function sendDailyUpdatesEmail() {
+	if (!EMAIL_PASS) {
+		console.warn('GMAIL_APP_PASSWORD not set; skipping daily updates email.');
+		return;
+	}
+	const now = new Date();
+	const yesterday = new Date(now);
+	yesterday.setDate(now.getDate() - 1);
+	yesterday.setHours(0, 0, 0, 0);
+	const endOfYesterday = new Date(yesterday);
+	endOfYesterday.setHours(23, 59, 59, 999);
+
+	// Fetch products updated yesterday
+	const products = await Product.find({
+		updatedAt: { $gte: yesterday, $lte: endOfYesterday }
+	}).sort({ updatedAt: -1 }).lean();
+
+	// Build HTML report
+	let html = `<h2>Daily Updates Report for ${yesterday.toISOString().slice(0,10)}</h2>`;
+	if (products.length === 0) {
+		html += '<p>No updates found for yesterday.</p>';
+	} else {
+		html += '<table border="1" cellpadding="5" cellspacing="0"><tr><th>Product Name</th><th>Customer Name</th><th>Status</th><th>Updated At</th></tr>';
+		products.forEach(p => {
+			html += `<tr><td>${p.productName || ''}</td><td>${p.customerName || ''}</td><td>${p.approvalStatus || ''}</td><td>${p.updatedAt ? new Date(p.updatedAt).toLocaleString() : ''}</td></tr>`;
+		});
+		html += '</table>';
+	}
+
+	// Send email
+	await transporter.sendMail({
+		from: EMAIL_USER,
+		to: RECIPIENTS.join(','),
+		subject: `Daily Updates Report - ${yesterday.toISOString().slice(0,10)}`,
+		html
+	});
+	console.log('Daily updates email sent to', EMAIL_USER);
+}
+
+// Schedule job at 6 am every day
+cron.schedule('0 6 * * *', () => {
+	sendDailyUpdatesEmail().catch(err => console.error('Error sending daily updates email:', err));
+}, { timezone: 'Asia/Kolkata' });
 // ...existing code...
 // Place admin user management routes after app initialization
 // ...existing code...
@@ -1180,4 +1246,25 @@ app.post('/admin/delete-user/:id', async (req, res) => {
 	if (!isAdmin(req)) return res.status(403).send('Forbidden: Admins only');
 	await User.findByIdAndDelete(req.params.id);
 	res.redirect('/admin/users');
+});
+
+// Admin: send test email
+app.post('/admin/test-email', async (req, res) => {
+	if (!isAdmin(req)) return res.status(403).send('Forbidden: Admins only');
+	try {
+		if (!EMAIL_PASS) {
+			return res.status(400).send('GMAIL_APP_PASSWORD not set on server');
+		}
+		const to = (req.body.to && req.body.to.trim()) || RECIPIENTS.join(',');
+		await transporter.sendMail({
+			from: EMAIL_USER,
+			to,
+			subject: 'Test Email - Daily Updates Mailer',
+			html: '<p>This is a test email from NPD-app. If you received this, email configuration works.</p>'
+		});
+		res.redirect('/admin/users');
+	} catch (err) {
+		console.error('Test email send failed:', err);
+		res.status(500).send('Failed to send test email: ' + (err && err.message ? err.message : 'Unknown error'));
+	}
 });

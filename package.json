@@ -19,6 +19,8 @@
     "express-session": "^1.18.2",
     "mongoose": "^8.18.0",
     "multer": "^2.0.2",
+    "node-cron": "^4.2.1",
+    "nodemailer": "^7.0.11",
     "xlsx": "^0.18.5"
   }
 }

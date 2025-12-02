@@ -39,6 +39,14 @@
             <% }) %>
         </tbody>
     </table>
+
+    <h3>Test Email</h3>
+    <form method="post" action="/admin/test-email" class="form-card">
+        <label>Send test email to (optional):</label>
+        <input type="email" name="to" placeholder="comma separated recipients">
+        <button type="submit">Send Test Email</button>
+        <p style="font-size:0.9em;color:#555;">If empty, it will send to default recipients.</p>
+    </form>
         <script>
             (function(){
                 const form = document.querySelector('form[action="/admin/create-user"]');
