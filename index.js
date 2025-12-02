@@ -8,18 +8,24 @@ const cron = require('node-cron');
 const EMAIL_USER = 'rpplhosur@gmail.com';
 const EMAIL_PASS = process.env.GMAIL_APP_PASSWORD || '';
 const RECIPIENTS = [
-	'bala@bharathpackagings.com',
-	'rppl@bharathpackagings.com',
-	'marketing@bharathpackagings.com'
+    'bala@bharathpackagings.com',
+    'rppl@bharathpackagings.com',
+    'marketing@bharathpackagings.com',
+    'naveen@bharathpackagings.com'
 ];
 
-// Create transporter for Gmail
+// Create transporter for Gmail with explicit port and security settings
 const transporter = nodemailer.createTransport({
-	service: 'gmail',
+	host: 'smtp.gmail.com',
+	port: 465,
+	secure: true, // use SSL
 	auth: {
 		user: EMAIL_USER,
 		pass: EMAIL_PASS
-	}
+	},
+	connectionTimeout: 10000, // 10 seconds
+	greetingTimeout: 10000,
+	socketTimeout: 10000
 });
 
 // Function to get yesterday's updates and send email
