@@ -14,18 +14,22 @@ const RECIPIENTS = [
     'naveen@bharathpackagings.com'
 ];
 
-// Create transporter for Gmail with explicit port and security settings
+// Create transporter for Gmail with port 587 (TLS/STARTTLS)
 const transporter = nodemailer.createTransport({
 	host: 'smtp.gmail.com',
-	port: 465,
-	secure: true, // use SSL
+	port: 587,
+	secure: false, // use STARTTLS
 	auth: {
 		user: EMAIL_USER,
 		pass: EMAIL_PASS
 	},
-	connectionTimeout: 10000, // 10 seconds
-	greetingTimeout: 10000,
-	socketTimeout: 10000
+	connectionTimeout: 15000,
+	greetingTimeout: 15000,
+	socketTimeout: 15000,
+	tls: {
+		rejectUnauthorized: true,
+		minVersion: 'TLSv1.2'
+	}
 });
 
 // Function to get yesterday's updates and send email
