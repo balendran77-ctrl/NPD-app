@@ -1262,7 +1262,18 @@ app.post('/admin/test-email', async (req, res) => {
 		});
 		res.redirect('/admin/users');
 	} catch (err) {
-		console.error('Test email send failed:', err);
-		res.status(500).send('Failed to send test email: ' + (err && err.message ? err.message : 'Unknown error'));
+		// Enhanced diagnostic logging for SendGrid errors
+		if (err && err.response && err.response.body) {
+			console.error('SendGrid error body:', JSON.stringify(err.response.body));
+		}
+		console.error('Test email send failed:', err && err.stack ? err.stack : err);
+		let detail = err && err.message ? err.message : 'Unknown error';
+		if (err && err.code === 403) {
+			detail += ' (Forbidden: verify API key permissions and sender authentication)';
+		}
+		if (err && err.response && err.response.body && err.response.body.errors) {
+			detail += ' | ' + err.response.body.errors.map(e => e.message).join('; ');
+		}
+		res.status(500).send('Failed to send test email: ' + detail);
 	}
 });
