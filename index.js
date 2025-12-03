@@ -53,9 +53,14 @@ async function sendDailyUpdatesEmail() {
 	// Send email via SendGrid
 	await sgMail.send({
 		to: RECIPIENTS,
+		bcc: EMAIL_FROM, // copy to verified sender to confirm receipt
 		from: EMAIL_FROM,
 		subject: `Daily Updates Report - ${yesterday.toISOString().slice(0,10)}`,
-		html
+		text: `Daily Updates Report for ${yesterday.toISOString().slice(0,10)}\n\nIf you don't see the table, please view the HTML version.`,
+		html,
+		mailSettings: {
+			sandboxMode: { enable: false }
+		}
 	});
 	console.log('[DailyEmail] Sent daily updates email to', RECIPIENTS.join(', '));
 }
