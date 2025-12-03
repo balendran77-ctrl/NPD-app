@@ -33,6 +33,35 @@
             <input type="number" name="orderQuantity" value="<%= product.orderQuantity || '' %>"><br>
             <label>Order Value:</label>
             <input type="number" step="0.01" name="orderValue" value="<%= product.orderValue || '' %>"><br>
+
+            <h4>Sampling Costs</h4>
+            <div class="grid-2">
+                <div>
+                    <label>Stereo Cost:</label>
+                    <input type="number" step="0.01" name="stereoCost" value="<%= (product.sampleCosts && product.sampleCosts.stereoCost) || 0 %>">
+                </div>
+                <div>
+                    <label>Die Cost:</label>
+                    <input type="number" step="0.01" name="dieCost" value="<%= (product.sampleCosts && product.sampleCosts.dieCost) || 0 %>">
+                </div>
+                <div>
+                    <label>Board Cost:</label>
+                    <input type="number" step="0.01" name="boardCost" value="<%= (product.sampleCosts && product.sampleCosts.boardCost) || 0 %>">
+                </div>
+                <div>
+                    <label>Printing Cost:</label>
+                    <input type="number" step="0.01" name="printingCost" value="<%= (product.sampleCosts && product.sampleCosts.printingCost) || 0 %>">
+                </div>
+                <div>
+                    <label>Manhour Cost:</label>
+                    <input type="number" step="0.01" name="manhourCost" value="<%= (product.sampleCosts && product.sampleCosts.manhourCost) || 0 %>">
+                </div>
+                <div>
+                    <label>Courier Cost:</label>
+                    <input type="number" step="0.01" name="courierCost" value="<%= (product.sampleCosts && product.sampleCosts.courierCost) || 0 %>">
+                </div>
+            </div>
+            <p style="margin-top:8px;color:#333;">Total Sample Cost: <strong><%= (product.sampleCosts && product.sampleCosts.totalSampleCost) || 0 %></strong></p>
         </div>
         <label>Rejection Reason:</label>
         <input type="text" name="rejectionReason" value="<%= product.rejectionReason %>"><br>
