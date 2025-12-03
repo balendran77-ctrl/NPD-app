@@ -68,16 +68,7 @@ cron.schedule('0 6 * * *', () => {
 }, { timezone: 'Asia/Kolkata' });
 
 // Admin: manually run daily email now
-app.post('/admin/run-daily-email', async (req, res) => {
-	if (!isAdmin(req)) return res.status(403).send('Forbidden: Admins only');
-	try {
-		await sendDailyUpdatesEmail();
-		res.redirect('/admin/users');
-	} catch (err) {
-		console.error('Manual daily email failed:', err);
-		res.status(500).send('Manual daily email failed: ' + (err && err.message ? err.message : 'Unknown error'));
-	}
-});
+// Note: route must be registered after `app` initialization below.
 // ...existing code...
 // Place admin user management routes after app initialization
 // ...existing code...
@@ -1290,5 +1281,17 @@ app.post('/admin/test-email', async (req, res) => {
 			detail += ' | ' + err.response.body.errors.map(e => e.message).join('; ');
 		}
 		res.status(500).send('Failed to send test email: ' + detail);
+	}
+});
+
+// Admin: manually run daily email now (registered after app init)
+app.post('/admin/run-daily-email', async (req, res) => {
+	if (!isAdmin(req)) return res.status(403).send('Forbidden: Admins only');
+	try {
+		await sendDailyUpdatesEmail();
+		res.redirect('/admin/users');
+	} catch (err) {
+		console.error('Manual daily email failed:', err);
+		res.status(500).send('Manual daily email failed: ' + (err && err.message ? err.message : 'Unknown error'));
 	}
 });
