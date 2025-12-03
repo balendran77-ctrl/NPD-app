@@ -38,8 +38,17 @@ async function sendDailyUpdatesEmail() {
 		updatedAt: { $gte: yesterday, $lte: endOfYesterday }
 	}).sort({ updatedAt: -1 }).lean();
 
+	// Prepare compact summary counts
+	const total = products.length;
+	const byStatus = products.reduce((acc, p) => {
+		const s = (p.approvalStatus || 'Pending').trim();
+		acc[s] = (acc[s] || 0) + 1;
+		return acc;
+	}, {});
+
 	// Build HTML report
 	let html = `<h2>Daily Updates Report for ${yesterday.toISOString().slice(0,10)}</h2>`;
+	html += `<p>Total updates: ${total}. ` + Object.entries(byStatus).map(([k,v]) => `${k}: ${v}`).join(', ') + `</p>`;
 	if (products.length === 0) {
 		html += '<p>No updates found for yesterday.</p>';
 	} else {
@@ -50,18 +59,44 @@ async function sendDailyUpdatesEmail() {
 		html += '</table>';
 	}
 
-	// Send email via SendGrid
-	await sgMail.send({
-		to: RECIPIENTS,
-		bcc: EMAIL_FROM, // copy to verified sender to confirm receipt
-		from: EMAIL_FROM,
-		subject: `Daily Updates Report - ${yesterday.toISOString().slice(0,10)}`,
-		text: `Daily Updates Report for ${yesterday.toISOString().slice(0,10)}\n\nIf you don't see the table, please view the HTML version.`,
-		html,
-		mailSettings: {
-			sandboxMode: { enable: false }
-		}
-	});
+	// Build XLSX attachment
+	const XLSX = require('xlsx');
+	const data = products.map((p, idx) => ({
+		'Sl. No': idx + 1,
+		'Product Name': p.productName || '',
+		'Customer Name': p.customerName || '',
+		'Approval Status': p.approvalStatus || '',
+		'Updated At': p.updatedAt ? new Date(p.updatedAt).toISOString() : ''
+	}));
+	const ws = XLSX.utils.json_to_sheet(data);
+	const wb = XLSX.utils.book_new();
+	XLSX.utils.book_append_sheet(wb, ws, 'Daily Updates');
+	const xlsxBuf = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+
+	// Staggered sends: send one-by-one with small delay
+	for (const recipient of RECIPIENTS) {
+		const msg = {
+			to: recipient,
+			bcc: EMAIL_FROM,
+			from: EMAIL_FROM,
+			subject: `Daily Updates Report - ${yesterday.toISOString().slice(0,10)}`,
+			text: `Daily Updates Report for ${yesterday.toISOString().slice(0,10)}\nTotal: ${total}. ` + Object.entries(byStatus).map(([k,v]) => `${k}: ${v}`).join(', '),
+			html,
+			attachments: [
+				{
+					content: xlsxBuf.toString('base64'),
+					filename: `daily-updates-${yesterday.toISOString().slice(0,10)}.xlsx`,
+					type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+					content_id: 'daily_updates_xlsx',
+					Disposition: 'attachment'
+				}
+			],
+			mailSettings: { sandboxMode: { enable: false } }
+		};
+		await sgMail.send(msg);
+		console.log(`[DailyEmail] Sent to ${recipient}`);
+		await new Promise(r => setTimeout(r, 7000)); // 7s delay
+	}
 	console.log('[DailyEmail] Sent daily updates email to', RECIPIENTS.join(', '));
 }
 
