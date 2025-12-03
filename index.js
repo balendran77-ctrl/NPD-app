@@ -25,6 +25,7 @@ async function sendDailyUpdatesEmail() {
 		console.warn('SENDGRID_API_KEY not set; skipping daily updates email.');
 		return;
 	}
+	console.log('[DailyEmail] Preparing report for previous day at', new Date().toISOString());
 	const now = new Date();
 	const yesterday = new Date(now);
 	yesterday.setDate(now.getDate() - 1);
@@ -56,13 +57,27 @@ async function sendDailyUpdatesEmail() {
 		subject: `Daily Updates Report - ${yesterday.toISOString().slice(0,10)}`,
 		html
 	});
-	console.log('Daily updates email sent to', RECIPIENTS.join(', '));
+	console.log('[DailyEmail] Sent daily updates email to', RECIPIENTS.join(', '));
 }
 
 // Schedule job at 6 am every day
+console.log('[DailyEmail] Scheduling cron job 0 6 * * * with timezone Asia/Kolkata');
 cron.schedule('0 6 * * *', () => {
+	console.log('[DailyEmail] Cron trigger at', new Date().toISOString());
 	sendDailyUpdatesEmail().catch(err => console.error('Error sending daily updates email:', err));
 }, { timezone: 'Asia/Kolkata' });
+
+// Admin: manually run daily email now
+app.post('/admin/run-daily-email', async (req, res) => {
+	if (!isAdmin(req)) return res.status(403).send('Forbidden: Admins only');
+	try {
+		await sendDailyUpdatesEmail();
+		res.redirect('/admin/users');
+	} catch (err) {
+		console.error('Manual daily email failed:', err);
+		res.status(500).send('Manual daily email failed: ' + (err && err.message ? err.message : 'Unknown error'));
+	}
+});
 // ...existing code...
 // Place admin user management routes after app initialization
 // ...existing code...
