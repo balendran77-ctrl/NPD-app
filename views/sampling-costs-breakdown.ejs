@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Sampling Costs Breakdown</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+    body { font-family: Arial, sans-serif; background: #f9f9f9; margin: 0; padding: 0; }
+    .container { max-width: 1200px; margin: 30px auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.07); }
+    h2 { text-align: center; color: #333; }
+    .summary { background: #fff4e6; padding: 15px; border-radius: 6px; margin-bottom: 20px; text-align: center; font-size: 1.1rem; font-weight: bold; }
+    .date-range { text-align: center; color: #666; margin-bottom: 15px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 0.9rem; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    th { background: #f0f0f0; font-weight: bold; }
+    .total-row { background: #f9f9f9; font-weight: bold; }
+    .cost-cell { text-align: right; }
+    .back-link { display: inline-block; margin-top: 20px; padding: 10px 20px; background: #007bff; color: #fff; text-decoration: none; border-radius: 4px; }
+    .back-link:hover { background: #0056b3; }
+    @media (max-width: 768px) { 
+        .container { margin: 10px; padding: 10px; overflow-x: auto; } 
+        table { font-size: 0.8rem; }
+        th, td { padding: 6px; }
+    }
+    </style>
+</head>
+<body>
+    <%- include('partials/_nav') %>
+    <div class="container">
+        <h2>Sampling Costs Breakdown</h2>
+        <% if (fromDate && toDate) { %>
+            <div class="date-range">
+                Period: <%= new Date(fromDate).toLocaleDateString('en-IN') %> to <%= new Date(toDate).toLocaleDateString('en-IN') %>
+            </div>
+        <% } else { %>
+            <div class="date-range">All Time</div>
+        <% } %>
+        <div class="summary">
+            Total Sampling Costs: ₹<%= totalCost.toLocaleString('en-IN', {maximumFractionDigits: 0}) %>
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Sl. No</th>
+                    <th>Product Name</th>
+                    <th>Customer Name</th>
+                    <th>Stereo Cost (₹)</th>
+                    <th>Die Cost (₹)</th>
+                    <th>Board Cost (₹)</th>
+                    <th>Printing Cost (₹)</th>
+                    <th>Manhour Cost (₹)</th>
+                    <th>Courier Cost (₹)</th>
+                    <th>Total Cost (₹)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% let filteredProducts = products.filter(p => p.sampleCosts && p.sampleCosts.totalSampleCost > 0); %>
+                <% if (filteredProducts.length === 0) { %>
+                    <tr>
+                        <td colspan="10" style="text-align: center; padding: 20px; color: #999;">No sampling costs recorded in this period</td>
+                    </tr>
+                <% } else { %>
+                    <% 
+                    let totalStereo = 0, totalDie = 0, totalBoard = 0, totalPrinting = 0, totalManhour = 0, totalCourier = 0;
+                    filteredProducts.forEach(function(product, idx) { 
+                        const costs = product.sampleCosts || {};
+                        totalStereo += costs.stereoCost || 0;
+                        totalDie += costs.dieCost || 0;
+                        totalBoard += costs.boardCost || 0;
+                        totalPrinting += costs.printingCost || 0;
+                        totalManhour += costs.manhourCost || 0;
+                        totalCourier += costs.courierCost || 0;
+                    %>
+                        <tr>
+                            <td><%= idx + 1 %></td>
+                            <td><%= product.productName %></td>
+                            <td><%= product.customerName %></td>
+                            <td class="cost-cell">₹<%= (costs.stereoCost || 0).toLocaleString('en-IN', {maximumFractionDigits: 0}) %></td>
+                            <td class="cost-cell">₹<%= (costs.dieCost || 0).toLocaleString('en-IN', {maximumFractionDigits: 0}) %></td>
+                            <td class="cost-cell">₹<%= (costs.boardCost || 0).toLocaleString('en-IN', {maximumFractionDigits: 0}) %></td>
+                            <td class="cost-cell">₹<%= (costs.printingCost || 0).toLocaleString('en-IN', {maximumFractionDigits: 0}) %></td>
+                            <td class="cost-cell">₹<%= (costs.manhourCost || 0).toLocaleString('en-IN', {maximumFractionDigits: 0}) %></td>
+                            <td class="cost-cell">₹<%= (costs.courierCost || 0).toLocaleString('en-IN', {maximumFractionDigits: 0}) %></td>
+                            <td class="cost-cell">₹<%= (costs.totalSampleCost || 0).toLocaleString('en-IN', {maximumFractionDigits: 0}) %></td>
+                        </tr>
+                    <% }); %>
+                    <tr class="total-row">
+                        <td colspan="3" style="text-align: right;">Totals:</td>
+                        <td class="cost-cell">₹<%= totalStereo.toLocaleString('en-IN', {maximumFractionDigits: 0}) %></td>
+                        <td class="cost-cell">₹<%= totalDie.toLocaleString('en-IN', {maximumFractionDigits: 0}) %></td>
+                        <td class="cost-cell">₹<%= totalBoard.toLocaleString('en-IN', {maximumFractionDigits: 0}) %></td>
+                        <td class="cost-cell">₹<%= totalPrinting.toLocaleString('en-IN', {maximumFractionDigits: 0}) %></td>
+                        <td class="cost-cell">₹<%= totalManhour.toLocaleString('en-IN', {maximumFractionDigits: 0}) %></td>
+                        <td class="cost-cell">₹<%= totalCourier.toLocaleString('en-IN', {maximumFractionDigits: 0}) %></td>
+                        <td class="cost-cell">₹<%= totalCost.toLocaleString('en-IN', {maximumFractionDigits: 0}) %></td>
+                    </tr>
+                <% } %>
+            </tbody>
+        </table>
+        <a href="/" class="back-link">Back to Dashboard</a>
+    </div>
+</body>
+</html>

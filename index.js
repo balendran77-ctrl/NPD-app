@@ -527,6 +527,38 @@ app.get('/report', async (req, res) => {
 	res.render('report', { products, fromDate, toDate, status, dateField });
 });
 
+// Order Value breakdown
+app.get('/order-value-breakdown', async (req, res) => {
+	if (!req.session.user) return res.redirect('/login');
+	const { fromDate = '', toDate = '' } = req.query;
+	let filter = { approvalStatus: 'Approved' };
+	if (fromDate && toDate) {
+		const from = new Date(fromDate);
+		const to = new Date(toDate);
+		to.setHours(23,59,59,999);
+		filter.createdAt = { $gte: from, $lte: to };
+	}
+	const products = await Product.find(filter).lean();
+	const totalValue = products.reduce((sum, p) => sum + (p.orderValue || 0), 0);
+	res.render('order-value-breakdown', { products, fromDate, toDate, totalValue });
+});
+
+// Sampling Costs breakdown
+app.get('/sampling-costs-breakdown', async (req, res) => {
+	if (!req.session.user) return res.redirect('/login');
+	const { fromDate = '', toDate = '' } = req.query;
+	let filter = {};
+	if (fromDate && toDate) {
+		const from = new Date(fromDate);
+		const to = new Date(toDate);
+		to.setHours(23,59,59,999);
+		filter.updatedAt = { $gte: from, $lte: to };
+	}
+	const products = await Product.find(filter).lean();
+	const totalCost = products.reduce((sum, p) => sum + ((p.sampleCosts && p.sampleCosts.totalSampleCost) || 0), 0);
+	res.render('sampling-costs-breakdown', { products, fromDate, toDate, totalCost });
+});
+
 // Product Schema
 // Enable timestamps so Mongoose adds `createdAt` (request received date) and `updatedAt` automatically.
 // `createdAt` can be used as the request received date.

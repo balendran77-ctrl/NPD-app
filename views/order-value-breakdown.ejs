@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Order Value Breakdown</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+    body { font-family: Arial, sans-serif; background: #f9f9f9; margin: 0; padding: 0; }
+    .container { max-width: 900px; margin: 30px auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.07); }
+    h2 { text-align: center; color: #333; }
+    .summary { background: #e8f4fd; padding: 15px; border-radius: 6px; margin-bottom: 20px; text-align: center; font-size: 1.1rem; font-weight: bold; }
+    .date-range { text-align: center; color: #666; margin-bottom: 15px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { border: 1px solid #ccc; padding: 10px; text-align: left; }
+    th { background: #f0f0f0; font-weight: bold; }
+    .total-row { background: #f9f9f9; font-weight: bold; }
+    .back-link { display: inline-block; margin-top: 20px; padding: 10px 20px; background: #007bff; color: #fff; text-decoration: none; border-radius: 4px; }
+    .back-link:hover { background: #0056b3; }
+    @media (max-width: 600px) { .container { margin: 10px; padding: 10px; } table, th, td { font-size: 0.9rem; } }
+    </style>
+</head>
+<body>
+    <%- include('partials/_nav') %>
+    <div class="container">
+        <h2>Order Value Breakdown</h2>
+        <% if (fromDate && toDate) { %>
+            <div class="date-range">
+                Period: <%= new Date(fromDate).toLocaleDateString('en-IN') %> to <%= new Date(toDate).toLocaleDateString('en-IN') %>
+            </div>
+        <% } else { %>
+            <div class="date-range">All Time</div>
+        <% } %>
+        <div class="summary">
+            Total Order Value: ₹<%= totalValue.toLocaleString('en-IN', {maximumFractionDigits: 0}) %>
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Sl. No</th>
+                    <th>Product Name</th>
+                    <th>Customer Name</th>
+                    <th>Request Date</th>
+                    <th>Order Quantity</th>
+                    <th>Order Value (₹)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% let filteredProducts = products.filter(p => p.orderValue > 0); %>
+                <% if (filteredProducts.length === 0) { %>
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 20px; color: #999;">No orders with value in this period</td>
+                    </tr>
+                <% } else { %>
+                    <% filteredProducts.forEach(function(product, idx) { %>
+                        <tr>
+                            <td><%= idx + 1 %></td>
+                            <td><%= product.productName %></td>
+                            <td><%= product.customerName %></td>
+                            <td><%= product.createdAt ? new Date(product.createdAt).toLocaleDateString('en-IN') : '' %></td>
+                            <td><%= product.orderQuantity || '' %></td>
+                            <td>₹<%= (product.orderValue || 0).toLocaleString('en-IN', {maximumFractionDigits: 0}) %></td>
+                        </tr>
+                    <% }); %>
+                    <tr class="total-row">
+                        <td colspan="5" style="text-align: right;">Total:</td>
+                        <td>₹<%= totalValue.toLocaleString('en-IN', {maximumFractionDigits: 0}) %></td>
+                    </tr>
+                <% } %>
+            </tbody>
+        </table>
+        <a href="/" class="back-link">Back to Dashboard</a>
+    </div>
+</body>
+</html>

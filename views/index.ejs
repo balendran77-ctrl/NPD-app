@@ -34,7 +34,10 @@
                 if (cat === 'Delayed %') linkStatus = 'Delayed';
                 if (cat === 'Order Quantity' || cat === 'Order Value') linkStatus = 'Sample approved';
                 const statusParam = encodeURIComponent(linkStatus);
-                const href = `/report?fromDate=${fromDate}&toDate=${toDate}&status=${statusParam}&dateField=createdAt`;
+                let href = `/report?fromDate=${fromDate}&toDate=${toDate}&status=${statusParam}&dateField=createdAt`;
+                // For Order Value and Total Sampling Costs, link to dedicated breakdown
+                if (cat === 'Order Value') href = `/order-value-breakdown?fromDate=${fromDate}&toDate=${toDate}`;
+                if (cat === 'Total Sampling Costs') href = `/sampling-costs-breakdown?fromDate=${fromDate}&toDate=${toDate}`;
             %>
                 <div class="card">
                     <div class="card-title">
@@ -43,8 +46,8 @@
                     <div class="card-value">
                         <% if (cat === 'Ontime %' || cat === 'Delayed %') { %>
                             <%= total %>%
-                        <% } else if (cat === 'Order Value') { %>
-                            ₹ <%= total.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %>
+                        <% } else if (cat === 'Order Value' || cat === 'Total Sampling Costs') { %>
+                            <a href="<%= href %>">₹ <%= total.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></a>
                         <% } else { %>
                             <a href="<%= href %>"><%= total %></a>
                         <% } %>
