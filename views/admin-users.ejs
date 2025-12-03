@@ -47,6 +47,12 @@
         <button type="submit">Send Test Email</button>
         <p style="font-size:0.9em;color:#555;">If empty, it will send to default recipients.</p>
     </form>
+
+    <h3>Daily Email</h3>
+    <form method="post" action="/admin/run-daily-email" class="form-card">
+        <p style="font-size:0.95em;">Manually trigger the previous day's daily updates email.</p>
+        <button type="submit">Run Daily Email Now</button>
+    </form>
         <script>
             (function(){
                 const form = document.querySelector('form[action="/admin/create-user"]');
