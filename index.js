@@ -371,6 +371,18 @@ app.get('/', async (req, res) => {
 	totals['Ontime %'] = ontimePercent;
 	totals['Delayed %'] = delayedPercent;
 
+	// Total Sampling Costs KPI for the selected period
+	try {
+		const costAgg = await Product.aggregate([
+			{ $match: { createdAt: { $gte: start, $lte: end } } },
+			{ $group: { _id: null, totalCost: { $sum: { $ifNull: [ '$sampleCosts.totalSampleCost', 0 ] } } } }
+		]);
+		const samplingTotal = costAgg.length ? costAgg[0].totalCost : 0;
+		totals['Total Sampling Costs'] = Math.round((samplingTotal + Number.EPSILON) * 100) / 100;
+	} catch(costErr) {
+		console.warn('Sampling cost aggregation failed:', costErr.message);
+	}
+
 	const dashboard = { labels, datasets, totals };
 
 	// Aggregate approved order metrics for the same period (based on createdAt range for consistency)
@@ -557,6 +569,16 @@ const productSchema = new mongoose.Schema({
 	// Order metrics (captured when status becomes Approved)
 	orderQuantity: Number,
 	orderValue: Number,
+	// Sampling cost breakdown and total
+	sampleCosts: {
+		stereoCost: { type: Number, default: 0 },
+		dieCost: { type: Number, default: 0 },
+		boardCost: { type: Number, default: 0 },
+		printingCost: { type: Number, default: 0 },
+		manhourCost: { type: Number, default: 0 },
+		courierCost: { type: Number, default: 0 },
+		totalSampleCost: { type: Number, default: 0 }
+	},
 	statusUpdates: [{
 		date: String,
 		status: String,
@@ -783,6 +805,19 @@ app.post('/update-product/:id', async (req, res) => {
 			if (!isNaN(ov)) update.orderValue = ov;
 		}
 	}
+
+	// Capture sampling cost fields (optional, regardless of approval)
+	const sc = {
+		stereoCost: Number(req.body.stereoCost || 0) || 0,
+		dieCost: Number(req.body.dieCost || 0) || 0,
+		boardCost: Number(req.body.boardCost || 0) || 0,
+		printingCost: Number(req.body.printingCost || 0) || 0,
+		manhourCost: Number(req.body.manhourCost || 0) || 0,
+		courierCost: Number(req.body.courierCost || 0) || 0,
+	};
+	sc.totalSampleCost = sc.stereoCost + sc.dieCost + sc.boardCost + sc.printingCost + sc.manhourCost + sc.courierCost;
+
+	update['sampleCosts'] = sc;
 	// If status update fields are present, push to statusUpdates array
 	if (req.body.statusDate && req.body.status && req.body.statusDetails) {
 		await Product.findByIdAndUpdate(req.params.id, {
@@ -888,6 +923,13 @@ app.get('/download-report', async (req, res) => {
 		'Approval Status': p.approvalStatus,
 		'Order Quantity': p.orderQuantity,
 		'Order Value': p.orderValue,
+		'Stereo Cost': p.sampleCosts?.stereoCost || 0,
+		'Die Cost': p.sampleCosts?.dieCost || 0,
+		'Board Cost': p.sampleCosts?.boardCost || 0,
+		'Printing Cost': p.sampleCosts?.printingCost || 0,
+		'Manhour Cost': p.sampleCosts?.manhourCost || 0,
+		'Courier Cost': p.sampleCosts?.courierCost || 0,
+		'Total Sample Cost': p.sampleCosts?.totalSampleCost || 0,
 		'Rejection Reason': p.rejectionReason,
 	'Drawing Path': p.drawingPath,
 	'Status Updates': Array.isArray(p.statusUpdates) ? p.statusUpdates.map(su => `${su.date}: ${su.status} - ${su.details}`).join('; ') : ''
@@ -1009,6 +1051,13 @@ app.get('/download-report', async (req, res) => {
 			'Approval Status': p.approvalStatus,
 			'Order Quantity': p.orderQuantity,
 			'Order Value': p.orderValue,
+			'Stereo Cost': p.sampleCosts?.stereoCost || 0,
+			'Die Cost': p.sampleCosts?.dieCost || 0,
+			'Board Cost': p.sampleCosts?.boardCost || 0,
+			'Printing Cost': p.sampleCosts?.printingCost || 0,
+			'Manhour Cost': p.sampleCosts?.manhourCost || 0,
+			'Courier Cost': p.sampleCosts?.courierCost || 0,
+			'Total Sample Cost': p.sampleCosts?.totalSampleCost || 0,
 			'Rejection Reason': p.rejectionReason,
 			'Drawing Path': p.drawingPath,
 			'Status Updates': Array.isArray(p.statusUpdates) ? p.statusUpdates.map(su => `${su.date}: ${su.status} - ${su.details}`).join('; ') : ''
