@@ -373,8 +373,9 @@ app.get('/', async (req, res) => {
 
 	// Total Sampling Costs KPI for the selected period
 	try {
+		// Use updatedAt window so recently updated sampling costs are included
 		const costAgg = await Product.aggregate([
-			{ $match: { createdAt: { $gte: start, $lte: end } } },
+			{ $match: { updatedAt: { $gte: start, $lte: end } } },
 			{ $group: { _id: null, totalCost: { $sum: { $ifNull: [ '$sampleCosts.totalSampleCost', 0 ] } } } }
 		]);
 		const samplingTotal = costAgg.length ? costAgg[0].totalCost : 0;
@@ -808,12 +809,12 @@ app.post('/update-product/:id', async (req, res) => {
 
 	// Capture sampling cost fields (optional, regardless of approval)
 	const sc = {
-		stereoCost: Number(req.body.stereoCost || 0) || 0,
-		dieCost: Number(req.body.dieCost || 0) || 0,
-		boardCost: Number(req.body.boardCost || 0) || 0,
-		printingCost: Number(req.body.printingCost || 0) || 0,
-		manhourCost: Number(req.body.manhourCost || 0) || 0,
-		courierCost: Number(req.body.courierCost || 0) || 0,
+		stereoCost: isNaN(Number(req.body.stereoCost)) ? 0 : Number(req.body.stereoCost),
+		dieCost: isNaN(Number(req.body.dieCost)) ? 0 : Number(req.body.dieCost),
+		boardCost: isNaN(Number(req.body.boardCost)) ? 0 : Number(req.body.boardCost),
+		printingCost: isNaN(Number(req.body.printingCost)) ? 0 : Number(req.body.printingCost),
+		manhourCost: isNaN(Number(req.body.manhourCost)) ? 0 : Number(req.body.manhourCost),
+		courierCost: isNaN(Number(req.body.courierCost)) ? 0 : Number(req.body.courierCost),
 	};
 	sc.totalSampleCost = sc.stereoCost + sc.dieCost + sc.boardCost + sc.printingCost + sc.manhourCost + sc.courierCost;
 
