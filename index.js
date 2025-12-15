@@ -157,9 +157,46 @@ if (!mongoUri) {
 	process.exit(1);
 }
 console.log('Using MongoDB URI from environment (MONGO_URI)');
+// Initialize master data with default values if empty
+async function initializeMasterData() {
+	try {
+		const gsmCount = await GSMMaster.countDocuments();
+		if (gsmCount === 0) {
+			const defaultGSM = ['120', '150', '180', '200', '220', '250', '280', '300'];
+			await GSMMaster.insertMany(defaultGSM.map(v => ({ value: v, isActive: true })));
+			console.log('Initialized GSM master data');
+		}
+
+		const bfCount = await BFMaster.countDocuments();
+		if (bfCount === 0) {
+			const defaultBF = ['1.8', '2.0', '2.2', '2.5', '2.8', '3.0', '3.2', '3.5'];
+			await BFMaster.insertMany(defaultBF.map(v => ({ value: v, isActive: true })));
+			console.log('Initialized BF master data');
+		}
+
+		const shadeCount = await ShadeMaster.countDocuments();
+		if (shadeCount === 0) {
+			const defaultShades = ['White', 'Brown', 'Kraft', 'Grey'];
+			await ShadeMaster.insertMany(defaultShades.map(v => ({ value: v, isActive: true })));
+			console.log('Initialized Shade master data');
+		}
+
+		const millCount = await MillMaster.countDocuments();
+		if (millCount === 0) {
+			const defaultMills = ['Mill A', 'Mill B', 'Mill C', 'Local Mill'];
+			await MillMaster.insertMany(defaultMills.map(v => ({ value: v, isActive: true })));
+			console.log('Initialized Mill master data');
+		}
+	} catch (err) {
+		console.error('Error initializing master data:', err);
+	}
+}
+
 // Start the server only after successful DB connection to avoid race conditions
 mongoose.connect(mongoUri)
-	.then(() => {
+	.then(async () => {
+		// Initialize master data
+		await initializeMasterData();
 		// DB connected, start server with port fallback
 		const startServer = (port, attemptsLeft = 5) => {
 			// Bind to 0.0.0.0 so hosted platforms (Render, Heroku, etc.) can reach the process
@@ -642,6 +679,50 @@ const productSchema = new mongoose.Schema({
 }, { timestamps: true });
 const Product = mongoose.model('Product', productSchema);
 
+// Paper Specification Schema - separate collection with edit history
+const paperSpecificationSchema = new mongoose.Schema({
+	productId: { type: mongoose.Schema.Types.ObjectId, ref: 'Product', required: true },
+	ply: { type: Number, required: true, min: 1, max: 7 }, // 1-7 ply, mostly 3 and 5
+	layers: [{
+		layerName: { type: String, required: true }, // Top, Flute 1, Packing 1, Flute 2, Packing 2, etc.
+		gsm: { type: String, required: true },
+		bf: { type: String, required: true },
+		shade: { type: String, required: true },
+		mill: { type: String, required: true }
+	}],
+	editHistory: [{
+		editedAt: { type: Date, default: Date.now },
+		editedBy: String,
+		changes: String // Description of what changed
+	}]
+}, { timestamps: true });
+const PaperSpecification = mongoose.model('PaperSpecification', paperSpecificationSchema);
+
+// Master Data Schemas - for dropdown options
+const gsmMasterSchema = new mongoose.Schema({
+	value: { type: String, required: true, unique: true },
+	isActive: { type: Boolean, default: true }
+}, { timestamps: true });
+const GSMMaster = mongoose.model('GSMMaster', gsmMasterSchema);
+
+const bfMasterSchema = new mongoose.Schema({
+	value: { type: String, required: true, unique: true },
+	isActive: { type: Boolean, default: true }
+}, { timestamps: true });
+const BFMaster = mongoose.model('BFMaster', bfMasterSchema);
+
+const shadeMasterSchema = new mongoose.Schema({
+	value: { type: String, required: true, unique: true },
+	isActive: { type: Boolean, default: true }
+}, { timestamps: true });
+const ShadeMaster = mongoose.model('ShadeMaster', shadeMasterSchema);
+
+const millMasterSchema = new mongoose.Schema({
+	value: { type: String, required: true, unique: true },
+	isActive: { type: Boolean, default: true }
+}, { timestamps: true });
+const MillMaster = mongoose.model('MillMaster', millMasterSchema);
+
 // Add Product
 app.get('/add-product', (req, res) => {
 	if (!req.session.user) return res.redirect('/login');
@@ -812,6 +893,179 @@ app.post('/edit-specifications/:id', upload.single('drawing'), async (req, res) 
 	await Product.findByIdAndUpdate(req.params.id, update);
 	res.redirect('/products');
 });
+
+// Paper Specification Routes
+// Get paper specification for a product
+app.get('/paper-specification/:productId', async (req, res) => {
+	if (!req.session.user) return res.redirect('/login');
+	const product = await Product.findById(req.params.productId);
+	if (!product) return res.status(404).send('Product not found');
+	
+	const paperSpec = await PaperSpecification.findOne({ productId: req.params.productId });
+	const gsmOptions = await GSMMaster.find({ isActive: true }).lean();
+	const bfOptions = await BFMaster.find({ isActive: true }).lean();
+	const shadeOptions = await ShadeMaster.find({ isActive: true }).lean();
+	const millOptions = await MillMaster.find({ isActive: true }).lean();
+	
+	res.render('paper-specification', { 
+		product, 
+		paperSpec, 
+		gsmOptions, 
+		bfOptions, 
+		shadeOptions, 
+		millOptions 
+	});
+});
+
+// Save or update paper specification
+app.post('/paper-specification/:productId', async (req, res) => {
+	if (!req.session.user) return res.redirect('/login');
+	const { ply } = req.body;
+	
+	// Parse layers from form data - layers come as layers[0][layerName], layers[0][gsm], etc.
+	const layerArray = [];
+	const layersData = req.body.layers;
+	
+	if (Array.isArray(layersData)) {
+		layersData.forEach(layer => {
+			layerArray.push({
+				layerName: layer.layerName,
+				gsm: layer.gsm,
+				bf: layer.bf,
+				shade: layer.shade,
+				mill: layer.mill
+			});
+		});
+	}
+	
+	const existingSpec = await PaperSpecification.findOne({ productId: req.params.productId });
+	
+	if (existingSpec) {
+		// Update existing specification and add to edit history
+		const changes = `Updated from ${existingSpec.ply}-ply to ${ply}-ply`;
+		existingSpec.ply = ply;
+		existingSpec.layers = layerArray;
+		existingSpec.editHistory.push({
+			editedAt: new Date(),
+			editedBy: req.session.user.username,
+			changes: changes
+		});
+		await existingSpec.save();
+	} else {
+		// Create new specification
+		const newSpec = new PaperSpecification({
+			productId: req.params.productId,
+			ply: ply,
+			layers: layerArray,
+			editHistory: [{
+				editedAt: new Date(),
+				editedBy: req.session.user.username,
+				changes: 'Initial creation'
+			}]
+		});
+		await newSpec.save();
+	}
+	
+	res.redirect('/edit-specifications');
+});
+
+// Master Data Management Routes
+// GSM Master
+app.get('/admin/gsm-master', async (req, res) => {
+	if (!req.session.user || req.session.user.role !== 'admin') return res.redirect('/login');
+	const gsmList = await GSMMaster.find().sort({ value: 1 }).lean();
+	res.render('admin/gsm-master', { gsmList });
+});
+
+app.post('/admin/gsm-master', async (req, res) => {
+	if (!req.session.user || req.session.user.role !== 'admin') return res.redirect('/login');
+	const { value } = req.body;
+	await GSMMaster.create({ value, isActive: true });
+	res.redirect('/admin/gsm-master');
+});
+
+app.post('/admin/gsm-master/toggle/:id', async (req, res) => {
+	if (!req.session.user || req.session.user.role !== 'admin') return res.redirect('/login');
+	const gsm = await GSMMaster.findById(req.params.id);
+	if (gsm) {
+		gsm.isActive = !gsm.isActive;
+		await gsm.save();
+	}
+	res.redirect('/admin/gsm-master');
+});
+
+// BF Master
+app.get('/admin/bf-master', async (req, res) => {
+	if (!req.session.user || req.session.user.role !== 'admin') return res.redirect('/login');
+	const bfList = await BFMaster.find().sort({ value: 1 }).lean();
+	res.render('admin/bf-master', { bfList });
+});
+
+app.post('/admin/bf-master', async (req, res) => {
+	if (!req.session.user || req.session.user.role !== 'admin') return res.redirect('/login');
+	const { value } = req.body;
+	await BFMaster.create({ value, isActive: true });
+	res.redirect('/admin/bf-master');
+});
+
+app.post('/admin/bf-master/toggle/:id', async (req, res) => {
+	if (!req.session.user || req.session.user.role !== 'admin') return res.redirect('/login');
+	const bf = await BFMaster.findById(req.params.id);
+	if (bf) {
+		bf.isActive = !bf.isActive;
+		await bf.save();
+	}
+	res.redirect('/admin/bf-master');
+});
+
+// Shade Master
+app.get('/admin/shade-master', async (req, res) => {
+	if (!req.session.user || req.session.user.role !== 'admin') return res.redirect('/login');
+	const shadeList = await ShadeMaster.find().sort({ value: 1 }).lean();
+	res.render('admin/shade-master', { shadeList });
+});
+
+app.post('/admin/shade-master', async (req, res) => {
+	if (!req.session.user || req.session.user.role !== 'admin') return res.redirect('/login');
+	const { value } = req.body;
+	await ShadeMaster.create({ value, isActive: true });
+	res.redirect('/admin/shade-master');
+});
+
+app.post('/admin/shade-master/toggle/:id', async (req, res) => {
+	if (!req.session.user || req.session.user.role !== 'admin') return res.redirect('/login');
+	const shade = await ShadeMaster.findById(req.params.id);
+	if (shade) {
+		shade.isActive = !shade.isActive;
+		await shade.save();
+	}
+	res.redirect('/admin/shade-master');
+});
+
+// Mill Master
+app.get('/admin/mill-master', async (req, res) => {
+	if (!req.session.user || req.session.user.role !== 'admin') return res.redirect('/login');
+	const millList = await MillMaster.find().sort({ value: 1 }).lean();
+	res.render('admin/mill-master', { millList });
+});
+
+app.post('/admin/mill-master', async (req, res) => {
+	if (!req.session.user || req.session.user.role !== 'admin') return res.redirect('/login');
+	const { value } = req.body;
+	await MillMaster.create({ value, isActive: true });
+	res.redirect('/admin/mill-master');
+});
+
+app.post('/admin/mill-master/toggle/:id', async (req, res) => {
+	if (!req.session.user || req.session.user.role !== 'admin') return res.redirect('/login');
+	const mill = await MillMaster.findById(req.params.id);
+	if (mill) {
+		mill.isActive = !mill.isActive;
+		await mill.save();
+	}
+	res.redirect('/admin/mill-master');
+});
+
 // Update product delivery/approval
 app.get('/update-product/:id', async (req, res) => {
 	if (!req.session.user) return res.redirect('/login');

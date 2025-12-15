@@ -53,6 +53,17 @@
         <p style="font-size:0.95em;">Manually trigger the previous day's daily updates email.</p>
         <button type="submit">Run Daily Email Now</button>
     </form>
+
+    <h3>Master Data Management</h3>
+    <div class="form-card">
+        <p style="font-size:0.95em;">Manage master data for paper specifications:</p>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px;">
+            <a href="/admin/gsm-master" style="padding: 8px 15px; background: #007bff; color: white; text-decoration: none; border-radius: 4px;">GSM Master</a>
+            <a href="/admin/bf-master" style="padding: 8px 15px; background: #007bff; color: white; text-decoration: none; border-radius: 4px;">BF Master</a>
+            <a href="/admin/shade-master" style="padding: 8px 15px; background: #007bff; color: white; text-decoration: none; border-radius: 4px;">Shade Master</a>
+            <a href="/admin/mill-master" style="padding: 8px 15px; background: #007bff; color: white; text-decoration: none; border-radius: 4px;">Mill Master</a>
+        </div>
+    </div>
         <script>
             (function(){
                 const form = document.querySelector('form[action="/admin/create-user"]');

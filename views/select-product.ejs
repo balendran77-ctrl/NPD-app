@@ -58,7 +58,8 @@
             <% products.forEach(function(product, idx) { %>
                 <li class="product-item" data-name="<%= product.productName %>" data-cust="<%= product.customerName %>">
                     <strong>Sl. No:</strong> <%= idx + 1 %> - <strong>Name:</strong> <%= product.productName %> - <strong>Customer:</strong> <%= product.customerName %>
-                    <a href="/edit-specifications/<%= product._id %>">Edit</a>
+                    <a href="/edit-specifications/<%= product._id %>">Edit</a> | 
+                    <a href="/paper-specification/<%= product._id %>">Paper Spec</a>
                 </li>
             <% }); %>
         </ul>

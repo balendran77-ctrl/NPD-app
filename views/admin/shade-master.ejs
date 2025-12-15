@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Shade Master Data</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="/styles.css">
+    <style>
+        .master-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        .master-table th,
+        .master-table td {
+            border: 1px solid #ccc;
+            padding: 10px;
+            text-align: left;
+        }
+        .master-table th {
+            background-color: #f0f0f0;
+        }
+        .toggle-btn {
+            padding: 5px 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .active {
+            background-color: #28a745;
+            color: white;
+        }
+        .inactive {
+            background-color: #dc3545;
+            color: white;
+        }
+        .add-form {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .add-form input {
+            padding: 8px;
+            margin-right: 10px;
+            width: 300px;
+        }
+        .add-form button {
+            padding: 8px 15px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <%- include('../partials/_nav') %>
+    <div class="container">
+        <h2>Shade Master Data</h2>
+        
+        <div class="add-form">
+            <form action="/admin/shade-master" method="POST">
+                <input type="text" name="value" placeholder="Enter Shade value (e.g., White, Brown)" required>
+                <button type="submit">Add Shade</button>
+            </form>
+        </div>
+
+        <table class="master-table">
+            <thead>
+                <tr>
+                    <th>Shade Value</th>
+                    <th>Status</th>
+                    <th>Created Date</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% if (shadeList.length === 0) { %>
+                    <tr>
+                        <td colspan="4" style="text-align: center;">No Shade values added yet</td>
+                    </tr>
+                <% } else { %>
+                    <% shadeList.forEach(function(shade) { %>
+                        <tr>
+                            <td><%= shade.value %></td>
+                            <td><%= shade.isActive ? 'Active' : 'Inactive' %></td>
+                            <td><%= new Date(shade.createdAt).toLocaleDateString('en-IN') %></td>
+                            <td>
+                                <form action="/admin/shade-master/toggle/<%= shade._id %>" method="POST" style="display: inline;">
+                                    <button type="submit" class="toggle-btn <%= shade.isActive ? 'active' : 'inactive' %>">
+                                        <%= shade.isActive ? 'Deactivate' : 'Activate' %>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    <% }); %>
+                <% } %>
+            </tbody>
+        </table>
+
+        <a href="/admin/users">Back to Admin Panel</a>
+    </div>
+</body>
+</html>
