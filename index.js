@@ -714,7 +714,7 @@ app.get('/edit-specifications', async (req, res) => {
 		to.setHours(23,59,59,999);
 		filter.createdAt = { $gte: from, $lte: to };
 	}
-	const products = await Product.find(filter).lean();
+	const products = await Product.find(filter).sort({ createdAt: -1 }).lean();
 	res.render('select-product', { products, q, fromDate, toDate });
 });
 
