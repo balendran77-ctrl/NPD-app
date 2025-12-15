@@ -169,7 +169,7 @@ async function initializeMasterData() {
 
 		const bfCount = await BFMaster.countDocuments();
 		if (bfCount === 0) {
-			const defaultBF = ['1.8', '2.0', '2.2', '2.5', '2.8', '3.0', '3.2', '3.5'];
+			const defaultBF = ['12', '14', '16', '18', '20', '22', '24', '28', '32', '35', '40'];
 			await BFMaster.insertMany(defaultBF.map(v => ({ value: v, isActive: true })));
 			console.log('Initialized BF master data');
 		}
