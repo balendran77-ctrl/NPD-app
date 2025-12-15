@@ -162,7 +162,7 @@ async function initializeMasterData() {
 	try {
 		const gsmCount = await GSMMaster.countDocuments();
 		if (gsmCount === 0) {
-			const defaultGSM = ['120', '150', '180', '200', '220', '250', '280', '300'];
+			const defaultGSM = ['90', '100', '110', '115', '120', '130', '140', '150', '170', '180', '200', '230', '240', '250', '270', '300', '337', '400', '440'];
 			await GSMMaster.insertMany(defaultGSM.map(v => ({ value: v, isActive: true })));
 			console.log('Initialized GSM master data');
 		}
@@ -176,7 +176,7 @@ async function initializeMasterData() {
 
 		const shadeCount = await ShadeMaster.countDocuments();
 		if (shadeCount === 0) {
-			const defaultShades = ['White', 'Brown', 'Kraft', 'Grey'];
+			const defaultShades = ['Natural', 'GYT', 'LGYT', 'KLB', 'WKLB', 'WTL', 'HWC', 'LWC', 'Pink', 'TL', 'NKLB', 'VTF'];
 			await ShadeMaster.insertMany(defaultShades.map(v => ({ value: v, isActive: true })));
 			console.log('Initialized Shade master data');
 		}
