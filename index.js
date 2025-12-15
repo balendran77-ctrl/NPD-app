@@ -742,6 +742,7 @@ app.get('/quick-update', async (req, res) => {
 	const total = await Product.countDocuments(filter);
 	const totalPages = Math.max(Math.ceil(total / limit), 1);
 	const products = await Product.find(filter)
+		.sort({ createdAt: -1 })
 		.skip((page - 1) * limit)
 		.limit(limit)
 		.lean();
@@ -772,6 +773,7 @@ app.get('/quick-update-data', async (req, res) => {
 	const total = await Product.countDocuments(filter);
 	const totalPages = Math.max(Math.ceil(total / limit), 1);
 	const products = await Product.find(filter)
+		.sort({ createdAt: -1 })
 		.skip((page - 1) * limit)
 		.limit(limit)
 		.lean();
